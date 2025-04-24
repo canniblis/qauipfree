@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>QauipFree Map</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    // Вставь свой MapBox токен здесь
+    mapboxgl.accessToken = 'pk.eyJ1IjoicWF1aXBmcmVlIiwiYSI6ImNtOGN2bG11NjJmMHoyanIzdGh5eWt6ankifQ.h5j64FxBh_zi9G3IdAGpZQ';
+
+    // Получить параметр city из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const city = urlParams.get('city') || 'kazakhstan';
+
+    // Координаты и масштаб для регионов и районов
+    const cityData = {
+      'kazakhstan': { center: [66.9237, 48.0196], zoom: 5 },
+      'almaty': { center: [76.8897, 43.2389], zoom: 12 },
+      'astana': { center: [71.4491, 51.1694], zoom: 12 },
+      'karaganda': { center: [73.1094, 49.8047], zoom: 12 },
+      'kyzylorda': { center: [65.5092, 44.8488], zoom: 12 },
+      'mangistau': { center: [51.1500, 43.6500], zoom: 12 },
+      'atyrau': { center: [51.8833, 47.1167], zoom: 12 },
+      'pavlodar': { center: [76.9674, 52.2873], zoom: 12 },
+      'ulytau': { center: [66.6750, 48.5481], zoom: 12 },
+      'akmola': { center: [69.4167, 51.9167], zoom: 12 },
+      'almaty-region': { center: [77.0112, 43.9966], zoom: 10 },
+      'almaty-medeu': { center: [76.9667, 43.2333], zoom: 14 },
+      'almaty-alatau': { center: [76.8667, 43.3167], zoom: 14 },
+      'almaty-bostandyk': { center: [76.9167, 43.2167], zoom: 14 }
+    };
+
+    // Установить центр и масштаб
+    const { center, zoom } = cityData[city] || cityData['kazakhstan'];
+
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: center,
+      zoom: zoom
+    });
+
+    // Опасные регионы и районы
+    const dangerousPlaces = [
+      // Регионы Казахстана
+      { lng: 76.8897, lat: 43.2389, desc: 'Алматы: 24,965 преступлений (18.8%), кражи, мошенничества, убийства' },
+      { lng: 71.4491, lat: 51.1694, desc: 'Астана: 17,339 преступлений (13.1%), лидер по тяжким преступлениям' },
+      { lng: 77.0112, lat: 43.9966, desc: 'Алматинская область: 10,385 преступлений (7.8%), убийства, изнасилования' },
+      { lng: 73.1094, lat: 49.8047, desc: 'Карагандинская область: 7,562 преступления (5.7%), мошенничества, кражи' },
+      { lng: 51.1500, lat: 43.6500, desc: 'Мангистауская область: рост на 12.2% (3,474 преступления)' },
+      { lng: 51.8833, lat: 47.1167, desc: 'Атырауская область: рост на 8.5% (4,647 преступлений), низкая раскрываемость' },
+      { lng: 76.9674, lat: 52.2873, desc: 'Павлодарская область: рост на 5.6% (5,322 преступления), кражи' },
+      { lng: 65.5092, lat: 44.8488, desc: 'Кызылординская область: рост на 4.6% (3,003 преступления), наркотики' },
+      { lng: 66.6750, lat: 48.5481, desc: 'Улытауская область: рост на 2.8% (1,314 преступлений)' },
+      { lng: 69.4167, lat: 51.9167, desc: 'Акмолинская область: рост на 0.7% (5,120 преступлений)' },
+      // Районы Алматы
+      { lng: 76.9667, lat: 43.2333, desc: 'Медеуский район, Алматы: кражи, грабежи у Центрального рынка и “Рамстора”' },
+      { lng: 76.8667, lat: 43.3167, desc: 'Алатауский район, Алматы: криминогенные микрорайоны Шанырак, Улжан' },
+      { lng: 76.9167, lat: 43.2167, desc: 'Бостандыкский район, Алматы: угоны, квартирные кражи' },
+      { lng: 76.8833, lat: 43.2667, desc: 'Микрорайон Орбита, Алматы: уличная преступность' },
+      { lng: 76.9400, lat: 43.2600, desc: 'Зелёный базар, Алматы: кражи в местах массового скопления' }
+    ];
+    dangerousPlaces.forEach(place => {
+      new mapboxgl.Marker({ color: 'red' })
+        .setLngLat([place.lng, place.lat])
+        .setPopup(new mapboxgl.Popup().setHTML(`<p>${place.desc}</p>`))
+        .addTo(map);
+    });
+
+    // Геолокация пользователя
+    if (city === 'kazakhstan') {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const userLocation = [position.coords.longitude, position.coords.latitude];
+        map.setCenter(userLocation);
+        map.setZoom(12);
+        new mapboxgl.Marker({ color: 'blue' })
+          .setLngLat(userLocation)
+          .addTo(map);
+      }, (error) => {
+        console.log('Геолокация не доступна: ', error);
+      });
+    }
+
+    // Пример маршрута в Алматы (от точки в городе до полицейского участка)
+    if (city === 'almaty' || city.includes('almaty-')) {
+      map.on('load', () => {
+        fetch(`https://api.mapbox.com/directions/v5/mapbox/walking/76.9000,43.2500;76.9500,43.2500?access_token=${mapboxgl.accessToken}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.routes && data.routes[0]) {
+              map.addLayer({
+                id: 'route',
+                type: 'line',
+                source: {
+                  type: 'geojson',
+                  data: {
+                    type: 'Feature',
+                    geometry: data.routes[0].geometry
+                  }
+                },
+                paint: { 'line-color': '#3887be', 'line-width': 5 }
+              });
+            }
+          });
+      });
+    }
+  </script>
+</body>
+</html>

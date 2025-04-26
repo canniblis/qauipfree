@@ -176,7 +176,10 @@
       },
       (error) => {
         console.error('Ошибка геолокации:', error);
-        alert('Не удалось получить геолокацию. Включите доступ к местоположению.');
+        // Fallback-координаты для тестирования (центр Алматы)
+        userLocation = [76.8897, 43.2389];
+        console.log('Используются fallback-координаты:', userLocation);
+        alert('Не удалось получить геолокацию. Используется центр Алматы для тестирования.');
       }
     );
 
@@ -278,19 +281,22 @@
             .addTo(map);
 
           // Построить маршрут
-          if (userLocation) {
-            console.log('Запрос маршрута для локального места:', safeLocation);
+          if (userLocation && Array.isArray(userLocation) && userLocation.length === 2) {
+            console.log('Запрос маршрута для локального места:', { userLocation, safeLocation });
             fetch(`https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation[0]},${userLocation[1]};${safeLocation[0]},${safeLocation[1]}?alternatives=true&access_token=${mapboxgl.accessToken}`)
               .then(response => {
-                console.log('Ответ от Directions API:', response);
+                console.log('Ответ от Directions API (локальное место):', response.status, response.statusText);
+                if (!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
                 return response.json();
               })
               .then(data => {
+                console.log('Данные маршрута:', data);
                 if (data.routes && data.routes.length > 0) {
                   console.log('Маршрут получен:', data.routes);
                   let safeRoute = data.routes.find(route => isRouteSafe(route, dangerousPlaces));
                   if (!safeRoute) {
                     safeRoute = data.routes[0];
+                    console.log('Безопасный маршрут не найден, используется первый:', safeRoute);
                   }
                   map.addLayer({
                     id: 'route',
@@ -305,22 +311,23 @@
                     paint: { 'line-color': '#3887be', 'line-width': 5 }
                   });
                 } else {
-                  console.log('Маршрут не найден');
-                  alert('Маршрут не найден');
+                  console.log('Маршрут не найден. Ответ API:', data);
+                  alert('Маршрут не найден. Проверьте, доступны ли начальная и конечная точки.');
                 }
               })
               .catch(error => {
                 console.error('Ошибка построения маршрута:', error);
-                alert('Ошибка построения маршрута');
+                alert('Ошибка построения маршрута: ' + error.message);
               });
           } else {
-            console.log('Геолокация недоступна для маршрута');
+            console.log('Геолокация недоступна или неверная:', userLocation);
+            alert('Маршрут не построен: геолокация недоступна.');
           }
           return;
         }
 
         // Если координаты переданы (из автодополнения)
-        if (coordinates) {
+        if (coordinates && Array.isArray(coordinates) && coordinates.length === 2) {
           console.log('Поиск по координатам:', coordinates);
           const safeLocation = coordinates;
           new mapboxgl.Marker({ color: 'green', className: 'safe-marker' })
@@ -329,19 +336,22 @@
             .addTo(map);
 
           // Построить маршрут
-          if (userLocation) {
-            console.log('Запрос маршрута для координат:', safeLocation);
+          if (userLocation && Array.isArray(userLocation) && userLocation.length === 2) {
+            console.log('Запрос маршрута для координат:', { userLocation, safeLocation });
             fetch(`https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation[0]},${userLocation[1]};${safeLocation[0]},${safeLocation[1]}?alternatives=true&access_token=${mapboxgl.accessToken}`)
               .then(response => {
-                console.log('Ответ от Directions API:', response);
+                console.log('Ответ от Directions API (координаты):', response.status, response.statusText);
+                if (!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
                 return response.json();
               })
               .then(data => {
+                console.log('Данные маршрута:', data);
                 if (data.routes && data.routes.length > 0) {
                   console.log('Маршрут получен:', data.routes);
                   let safeRoute = data.routes.find(route => isRouteSafe(route, dangerousPlaces));
                   if (!safeRoute) {
                     safeRoute = data.routes[0];
+                    console.log('Безопасный маршрут не найден, используется первый:', safeRoute);
                   }
                   map.addLayer({
                     id: 'route',
@@ -356,23 +366,25 @@
                     paint: { 'line-color': '#3887be', 'line-width': 5 }
                   });
                 } else {
-                  console.log('Маршрут не найден');
-                  alert('Маршрут не найден');
+                  console.log('Маршрут не найден. Ответ API:', data);
+                  alert('Маршрут не найден. Проверьте, доступны ли начальная и конечная точки.');
                 }
               })
               .catch(error => {
                 console.error('Ошибка построения маршрута:', error);
-                alert('Ошибка построения маршрута');
+                alert('Ошибка построения маршрута: ' + error.message);
               });
           } else {
-            console.log('Геолокация недоступна для маршрута');
+            console.log('Геолокация недоступна или неверная:', userLocation);
+            alert('Маршрут не построен: геолокация недоступна.');
           }
         } else {
           // Поиск через API
           console.log('Поиск через MapBox API:', search);
           fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(search)}.json?proximity=${center[0]},${center[1]}&access_token=${mapboxgl.accessToken}`)
             .then(response => {
-              console.log('Ответ от Geocoding API:', response);
+              console.log('Ответ от Geocoding API:', response.status, response.statusText);
+              if (!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
               return response.json();
             })
             .then(data => {
@@ -386,19 +398,22 @@
                   .addTo(map);
 
                 // Построить маршрут
-                if (userLocation) {
-                  console.log('Запрос маршрута для места MapBox:', safeLocation);
+                if (userLocation && Array.isArray(userLocation) && userLocation.length === 2) {
+                  console.log('Запрос маршрута для места MapBox:', { userLocation, safeLocation });
                   fetch(`https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation[0]},${userLocation[1]};${safeLocation[0]},${safeLocation[1]}?alternatives=true&access_token=${mapboxgl.accessToken}`)
                     .then(response => {
-                      console.log('Ответ от Directions API:', response);
+                      console.log('Ответ от Directions API (MapBox):', response.status, response.statusText);
+                      if (!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
                       return response.json();
                     })
                     .then(data => {
+                      console.log('Данные маршрута:', data);
                       if (data.routes && data.routes.length > 0) {
                         console.log('Маршрут получен:', data.routes);
                         let safeRoute = data.routes.find(route => isRouteSafe(route, dangerousPlaces));
                         if (!safeRoute) {
                           safeRoute = data.routes[0];
+                          console.log('Безопасный маршрут не найден, используется первый:', safeRoute);
                         }
                         map.addLayer({
                           id: 'route',
@@ -413,16 +428,17 @@
                           paint: { 'line-color': '#3887be', 'line-width': 5 }
                         });
                       } else {
-                        console.log('Маршрут не найден');
-                        alert('Маршрут не найден');
+                        console.log('Маршрут не найден. Ответ API:', data);
+                        alert('Маршрут не найден. Проверьте, доступны ли начальная и конечная точки.');
                       }
                     })
                     .catch(error => {
                       console.error('Ошибка построения маршрута:', error);
-                      alert('Ошибка построения маршрута');
+                      alert('Ошибка построения маршрута: ' + error.message);
                     });
                 } else {
-                  console.log('Геолокация недоступна для маршрута');
+                  console.log('Геолокация недоступна или неверная:', userLocation);
+                  alert('Маршрут не построен: геолокация недоступна.');
                 }
               } else {
                 console.log('Место не найдено');
@@ -431,7 +447,7 @@
             })
             .catch(error => {
               console.error('Ошибка поиска:', error);
-              alert('Ошибка поиска. Проверьте подключение к интернету.');
+              alert('Ошибка поиска: ' + error.message);
             });
         }
       }
@@ -496,7 +512,8 @@
         console.log('Запрос автодополнения MapBox:', search);
         fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(search)}.json?proximity=${center[0]},${center[1]}&access_token=${mapboxgl.accessToken}`)
           .then(response => {
-            console.log('Ответ от Geocoding API:', response);
+            console.log('Ответ от Geocoding API (автодополнение):', response.status, response.statusText);
+            if (!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
             return response.json();
           })
           .then(data => {
@@ -522,7 +539,7 @@
           })
           .catch(error => {
             console.error('Ошибка автодополнения:', error);
-            alert('Ошибка автодополнения. Проверьте подключение.');
+            alert('Ошибка автодополнения: ' + error.message);
           });
       });
 

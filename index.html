@@ -56,51 +56,46 @@
     .suggestion-item:hover {
       background: #f0f0f0;
     }
+    .mapboxgl-marker.warning-marker {
+      background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMiAyMkgxOCAyMkwxMiAyWiIgZmlsbD0icmVkIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiLz4KPHRleHQgeD0iMTIiIHk9IjE4IiBmb250LXNpemU9IjE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC13ZWlnaHQ9ImJvbGQiPiE8L3RleHQ+Cjwvc3ZnPg==');
+      background-size: 24px 24px;
+      width: 24px;
+      height: 24px;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div id="search-container">
-    <input id="search-input" type="text" placeholder="Введите место (школа, ресторан, полиция)" />
+    <input id="search-input" type="text" placeholder="Введите место (школа, кафе, Байтерек, Чарын)" />
     <button id="search-button">Найти</button>
     <div id="suggestions"></div>
   </div>
   <script>
     // Вставь свой MapBox токен здесь
-    mapboxgl.accessToken = 'pk.eyJ1IjoicWF1aXBmcmVlIiwiYSI6ImNtOGN2bG11NjJmMHoyanIzdGh5eWt6ankifQ.h5j64FxBh_zi9G3IdAGpZQ';
+    mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
 
     // Проверка токена
     if (!mapboxgl.accessToken || mapboxgl.accessToken === 'YOUR_MAPBOX_ACCESS_TOKEN') {
-      console.error('Ошибка: Вставьте валидный MapBox токен в mapboxgl.accessToken');
-      alert('Карта не загрузилась: отсутствует валидный MapBox токен');
+      console.error('Ошибка: Вставьте валидный MapBox токен');
+      alert('Карта не загрузилась: отсутствует токен MapBox');
+      throw new Error('Неверный токен');
     }
 
     // Получить параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
-    const city = urlParams.get('city') || 'kazakhstan';
-    let initialSearch = urlParams.get('search') || '';
+    const city = urlParams.get('city') || 'almaty';
+    const initialSearch = urlParams.get('search') || '';
 
-    // Координаты и масштаб для регионов и районов
+    // Координаты и масштаб
     const cityData = {
-      'kazakhstan': { center: [66.9237, 48.0196], zoom: 5 },
       'almaty': { center: [76.8897, 43.2389], zoom: 12 },
-      'astana': { center: [71.4491, 51.1694], zoom: 12 },
-      'karaganda': { center: [73.1094, 49.8047], zoom: 12 },
-      'kyzylorda': { center: [65.5092, 44.8488], zoom: 12 },
-      'mangistau': { center: [51.1500, 43.6500], zoom: 12 },
-      'atyrau': { center: [51.8833, 47.1167], zoom: 12 },
-      'pavlodar': { center: [76.9674, 52.2873], zoom: 12 },
-      'ulytau': { center: [66.6750, 48.5481], zoom: 12 },
-      'akmola': { center: [69.4167, 51.9167], zoom: 12 },
-      'almaty-region': { center: [77.0112, 43.9966], zoom: 10 },
-      'almaty-medeu': { center: [76.9667, 43.2333], zoom: 14 },
-      'almaty-alatau': { center: [76.8667, 43.3167], zoom: 14 },
-      'almaty-bostandyk': { center: [76.9167, 43.2167], zoom: 14 },
-      'almaty-turksib': { center: [76.9333, 43.3000], zoom: 14 }
+      'almaty_region': { center: [77.5000, 43.5000], zoom: 8 },
+      'astana': { center: [71.4459, 51.1605], zoom: 12 },
+      'kazakhstan': { center: [66.9237, 48.0196], zoom: 5 }
     };
-
-    // Установить центр и масштаб
-    const { center, zoom } = cityData[city] || cityData['kazakhstan'];
+    const { center, zoom } = cityData[city] || cityData['almaty'];
+    console.log('Город:', city, 'Центр:', center, 'Зум:', zoom);
 
     // Инициализация карты
     let map;
@@ -111,129 +106,136 @@
         center: center,
         zoom: zoom
       });
-      console.log('Карта успешно инициализирована');
+      console.log('Карта инициализирована');
     } catch (error) {
       console.error('Ошибка инициализации карты:', error);
-      alert('Не удалось загрузить карту. Проверьте токен MapBox и подключение к интернету.');
+      alert('Не удалось загрузить карту');
+      throw error;
     }
 
-    // Опасные регионы и районы
+    // Опасные места
     const dangerousPlaces = [
-      { lng: 76.8897, lat: 43.2389, desc: 'Алматы: 24,965 преступлений (18.8%), кражи, мошенничества, убийства' },
-      { lng: 71.4491, lat: 51.1694, desc: 'Астана: 17,339 преступлений (13.1%), лидер по тяжким преступлениям' },
-      { lng: 77.0112, lat: 43.9966, desc: 'Алматинская область: 10,385 преступлений (7.8%), убийства, изнасилования' },
-      { lng: 73.1094, lat: 49.8047, desc: 'Карагандинская область: 7,562 преступления (5.7%), мошенничества, кражи' },
-      { lng: 51.1500, lat: 43.6500, desc: 'Мангистауская область: рост на 12.2% (3,474 преступления)' },
-      { lng: 51.8833, lat: 47.1167, desc: 'Атырауская область: рост на 8.5% (4,647 преступлений), низкая раскрываемость' },
-      { lng: 76.9674, lat: 52.2873, desc: 'Павлодарская область: рост на 5.6% (5,322 преступления), кражи' },
-      { lng: 65.5092, lat: 44.8488, desc: 'Кызылординская область: рост на 4.6% (3,003 преступления), наркотики' },
-      { lng: 66.6750, lat: 48.5481, desc: 'Улытауская область: рост на 2.8% (1,314 преступлений)' },
-      { lng: 69.4167, lat: 51.9167, desc: 'Акмолинская область: рост на 0.7% (5,120 преступлений)' },
-      { lng: 76.9667, lat: 43.2333, desc: 'Медеуский район, Алматы: кражи, грабежи у Центрального рынка и “Рамстора”' },
-      { lng: 76.8667, lat: 43.3167, desc: 'Алатауский район, Алматы: криминогенные микрорайоны Шанырак, Улжан' },
-      { lng: 76.9167, lat: 43.2167, desc: 'Бостандыкский район, Алматы: угоны, квартирные кражи' },
-      { lng: 76.8833, lat: 43.2667, desc: 'Микрорайон Орбита, Алматы: уличная преступность' },
-      { lng: 76.9400, lat: 43.2600, desc: 'Зелёный базар, Алматы: кражи в местах массового скопления' },
-      { lng: 76.9667, lat: 43.3333, desc: 'ГРЭС, Алматы: агрессивное поведение местных жителей' },
-      { lng: 76.8500, lat: 43.3167, desc: 'Жанакуат, Алматы: попытка похищения человека' },
-      { lng: 76.9333, lat: 43.3000, desc: 'Турксибский район, Алматы: уличное хулиганство и непрофессиональное поведение полиции' },
-      { lng: 77.0833, lat: 43.1333, desc: 'Шымбулак, Алматы: подозрительная деятельность групп лиц' },
-      { lng: 76.8167, lat: 43.2667, desc: 'Туздыбастау, Алматы: подозрения в преступлениях против несовершеннолетних' },
-      { lng: 76.9500, lat: 43.2667, desc: 'Саяхат, Алматы: попытки кражи личных вещей в общественном месте' },
-      { lng: 76.9000, lat: 43.2833, desc: 'Пятилетка, Алматы: пьяные лица, представляющие угрозу безопасности' },
-      { lng: 76.9167, lat: 43.2500, desc: 'Микрорайон Жетысу, Алматы: попытка насильственного уведения' }
+      { lng: 76.8897, lat: 43.2389, desc: 'Алматы: центр, высокая преступность' },
+      { lng: 76.9667, lat: 43.2333, desc: 'Медеуский район: кражи' },
+      { lng: 76.8667, lat: 43.3167, desc: 'Алатауский район: Шанырак' },
+      { lng: 71.4295, lat: 51.1282, desc: 'Астана: Байтерек, мелкие кражи' },
+      { lng: 71.4000, lat: 51.1000, desc: 'Астана: Mega Silk Way' }
     ];
 
-    // Безопасные места в Алматы
+    // Безопасные места
     const safePlaces = [
-      { name: 'Полицейский участок Медеуского района', lng: 76.9667, lat: 43.2333, type: 'police' },
-      { name: 'Городская больница №7', lng: 76.9000, lat: 43.2500, type: 'hospital' },
-      { name: 'Аптека на Абая', lng: 76.9167, lat: 43.2389, type: 'pharmacy' },
-      { name: 'Участок Турксибского района', lng: 76.9333, lat: 43.3000, type: 'police' },
-      { name: 'Детская больница №2', lng: 76.8833, lat: 43.2667, type: 'hospital' },
-      { name: 'Школа №25', lng: 76.9167, lat: 43.2500, type: 'school' },
-      { name: 'Гимназия №15', lng: 76.9333, lat: 43.2333, type: 'school' },
-      { name: 'Ресторан Нават', lng: 76.9267, lat: 43.2389, type: 'restaurant' },
-      { name: 'KFC на Абая', lng: 76.9100, lat: 43.2380, type: 'restaurant' },
-      { name: 'ТРЦ Mega Alma-Ata', lng: 76.8987, lat: 43.2033, type: 'shop' },
-      { name: 'Парк Первого Президента', lng: 76.8667, lat: 43.2167, type: 'park' },
-      { name: 'Банк Халык', lng: 76.9400, lat: 43.2450, type: 'bank' }
+      // === Алматы ===
+      { name: 'Школа №25', lng: 76.9167, lat: 43.2500, type: 'school', region: 'almaty' },
+      { name: 'Гимназия №15', lng: 76.9333, lat: 43.2333, type: 'school', region: 'almaty' },
+      { name: 'Городская больница №7', lng: 76.9000, lat: 43.2500, type: 'hospital', region: 'almaty' },
+      { name: 'Аптека на Абая', lng: 76.9167, lat: 43.2389, type: 'pharmacy', region: 'almaty' },
+      { name: 'Полицейский участок Медеуского района', lng: 76.9667, lat: 43.2333, type: 'police', region: 'almaty' },
+      { name: 'Ресторан Нават', lng: 76.9267, lat: 43.2389, type: 'restaurant', region: 'almaty' },
+      { name: 'Vanilla Cafe', lng: 76.9200, lat: 43.2450, type: 'cafe', region: 'almaty' },
+      { name: 'ТРЦ Mega Alma-Ata', lng: 76.8987, lat: 43.2033, type: 'shop', region: 'almaty' },
+      { name: 'Парк 28 Панфиловцев', lng: 76.9600, lat: 43.2600, type: 'park', region: 'almaty' },
+      { name: 'Кок-Тобе', lng: 76.9700, lat: 43.2300, type: 'attraction', region: 'almaty' },
+      { name: 'Музей Кастеева', lng: 76.9000, lat: 43.2300, type: 'museum', region: 'almaty' },
+      { name: 'Оперный театр Абая', lng: 76.9400, lat: 43.2500, type: 'theatre', region: 'almaty' },
+      // === Алматинская область ===
+      { name: 'Чарынский каньон', lng: 79.0544, lat: 43.3553, type: 'attraction', region: 'almaty_region' },
+      { name: 'Шымбулак', lng: 76.9667, lat: 43.1333, type: 'attraction', region: 'almaty_region' },
+      { name: 'Озеро Каинды', lng: 78.4667, lat: 42.9833, type: 'attraction', region: 'almaty_region' },
+      { name: 'Большое Алматинское озеро', lng: 76.9833, lat: 43.0500, type: 'attraction', region: 'almaty_region' },
+      { name: 'Талдыкорган', lng: 78.3739, lat: 45.0156, type: 'city', region: 'almaty_region' },
+      { name: 'Медеу', lng: 76.9667, lat: 43.1667, type: 'attraction', region: 'almaty_region' },
+      // === Астана ===
+      { name: 'Байтерек', lng: 71.4295, lat: 51.1282, type: 'attraction', region: 'astana' },
+      { name: 'Хан Шатыр', lng: 71.4028, lat: 51.1328, type: 'shop', region: 'astana' },
+      { name: 'Мечеть Хазрет Султан', lng: 71.4667, lat: 51.1500, type: 'mosque', region: 'astana' },
+      { name: 'Национальный музей', lng: 71.4667, lat: 51.1333, type: 'museum', region: 'astana' },
+      { name: 'Coffee Boom Astana', lng: 71.4000, lat: 51.1167, type: 'cafe', region: 'astana' },
+      { name: 'Назарбаев Университет', lng: 71.4000, lat: 51.0900, type: 'university', region: 'astana' },
+      { name: 'Городская больница №1', lng: 71.4333, lat: 51.1667, type: 'hospital', region: 'astana' },
+      { name: 'Участок Алматинского района', lng: 71.4167, lat: 51.1333, type: 'police', region: 'astana' }
     ];
 
-    // Геолокация пользователя
+    // Геолокация
     let userLocation = null;
     navigator.geolocation.getCurrentPosition(
       (position) => {
         userLocation = [position.coords.longitude, position.coords.latitude];
-        console.log('Геолокация получена:', userLocation);
-        if (city === 'kazakhstan') {
-          map.setCenter(userLocation);
-          map.setZoom(12);
-        }
+        console.log('Геолокация:', userLocation);
+        map.setCenter(userLocation);
         new mapboxgl.Marker({ color: 'blue' })
           .setLngLat(userLocation)
           .addTo(map);
       },
       (error) => {
         console.error('Ошибка геолокации:', error);
-        // Fallback-координаты для тестирования (центр Алматы)
-        userLocation = [76.8897, 43.2389];
-        console.log('Используются fallback-координаты:', userLocation);
-        alert('Не удалось получить геолокацию. Используется центр Алматы для тестирования.');
-      }
+        userLocation = cityData[city].center;
+        console.log('Fallback-координаты:', userLocation);
+        alert('Геолокация недоступна. Используется центр региона.');
+        new mapboxgl.Marker({ color: 'blue' })
+          .setLngLat(userLocation)
+          .addTo(map);
+      },
+      { timeout: 10000, maximumAge: 0, enableHighAccuracy: true }
     );
 
-    // Кастомная иконка для опасных мест
-    map.on('load', () => {
-      console.log('Карта загружена');
+    // Проверка координат
+    function isValidCoords(coords) {
+      const valid = Array.isArray(coords) && coords.length === 2 && 
+                    typeof coords[0] === 'number' && typeof coords[1] === 'number' && 
+                    !isNaN(coords[0]) && !isNaN(coords[1]);
+      console.log('Проверка координат:', coords, 'Валидно:', valid);
+      return valid;
+    }
+
+    // Проверка маршрута
+    function isRouteSafe(route) {
       try {
-        const warningIcon = new Image(24, 24);
-        warningIcon.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMiAyMkgxOCAyMkwxMiAyWiIgZmlsbD0icmVkIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiLz4KPHRleHQgeD0iMTIiIHk9IjE4IiBmb250LXNpemU9IjE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC13ZWlnaHQ9ImJvbGQiPiE8L3RleHQ+Cjwvc3ZnPg==';
-        map.addImage('warning-icon', warningIcon);
-
-        // Добавить маркеры опасных мест
-        dangerousPlaces.forEach(place => {
-          new mapboxgl.Marker({ element: document.createElement('div') })
-            .setLngLat([place.lng, place.lat])
-            .setPopup(new mapboxgl.Popup().setHTML(`<p>${place.desc}</p>`))
-            .addTo(map)
-            .getElement().innerHTML = '<img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMiAyMkgxOCAyMkwxMiAyWiIgZmlsbD0icmVkIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiLz4KPHRleHQgeD0iMTIiIHk9IjE4IiBmb250LXNpemU9IjE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC13ZWlnaHQ9ImJvbGQiPiE8L3RleHQ+Cjwvc3ZnPg==" style="width: 24px; height: 24px;">';
-        });
-      } catch (error) {
-        console.error('Ошибка при добавлении опасных мест:', error);
-      }
-
-      // Функция проверки пересечения с опасной зоной
-      function isRouteSafe(route, dangerousPlaces) {
-        try {
-          const routeCoords = route.geometry.coordinates;
-          for (let place of dangerousPlaces) {
-            const dangerLng = place.lng;
-            const dangerLat = place.lat;
-            const dangerRadius = 0.007; // ~700 метров
-            for (let coord of routeCoords) {
-              const dist = Math.sqrt(
-                Math.pow(coord[0] - dangerLng, 2) + Math.pow(coord[1] - dangerLat, 2)
-              );
-              if (dist < dangerRadius) {
-                return false;
-              }
+        const routeCoords = route.geometry.coordinates;
+        const dangerRadius = 0.01; // ~1 км
+        for (let place of dangerousPlaces) {
+          for (let coord of routeCoords) {
+            const dist = Math.sqrt(
+              Math.pow(coord[0] - place.lng, 2) + Math.pow(coord[1] - place.lat, 2)
+            );
+            if (dist < dangerRadius) {
+              console.log('Маршрут пересекает опасную зону:', place.desc);
+              return false;
             }
           }
-          return true;
-        } catch (error) {
-          console.error('Ошибка проверки маршрута:', error);
-          return false;
         }
+        console.log('Маршрут безопасен');
+        return true;
+      } catch (error) {
+        console.error('Ошибка проверки маршрута:', error);
+        return true; // Пропускаем при ошибке
+      }
+    }
+
+    map.on('load', () => {
+      console.log('Карта загружена');
+
+      // Кастомные маркеры для опасных мест
+      try {
+        dangerousPlaces.forEach(place => {
+          new mapboxgl.Marker({ className: 'warning-marker' })
+            .setLngLat([place.lng, place.lat])
+            .setPopup(new mapboxgl.Popup().setHTML(<p>${place.desc}</p>))
+            .addTo(map);
+        });
+        console.log('Опасные места добавлены:', dangerousPlaces.length);
+      } catch (error) {
+        console.error('Ошибка добавления опасных мест:', error);
       }
 
-      // Функция для поиска и построения маршрута
+      // Функция поиска и построения маршрута
       function performSearch(searchQuery, coordinates) {
+        console.log('Поиск:', { query: searchQuery, coords: coordinates });
         if (!searchQuery && !coordinates) {
-          console.log('Пустой запрос поиска');
+          console.log('Пустой запрос');
+          alert('Введите место для поиска');
           return;
         }
-        console.log('Поиск:', searchQuery, coordinates);
+
         // Перевод запросов
         const queryMap = {
           'полиция': 'police',
@@ -246,14 +248,14 @@
           'магазин': 'shop',
           'парк': 'park',
           'банк': 'bank',
-          'почта': 'post_office',
           'музей': 'museum',
           'театр': 'theatre',
-          'отель': 'hotel',
           'трц': 'shop',
-          'остановка': 'bus_station'
+          'байтерек': 'attraction',
+          'чарын': 'attraction',
+          'шымбулак': 'attraction'
         };
-        const search = queryMap[searchQuery.toLowerCase()] || searchQuery;
+        const search = queryMap[searchQuery.toLowerCase()] || searchQuery.toLowerCase();
 
         // Удалить старый маршрут и маркер
         try {
@@ -264,157 +266,153 @@
           const existingMarker = document.querySelector('.safe-marker');
           if (existingMarker) existingMarker.remove();
         } catch (error) {
-          console.error('Ошибка удаления старого маршрута/маркера:', error);
+          console.error('Ошибка удаления маршрута/маркера:', error);
         }
 
-        // Поиск в локальных местах (Алматы)
-        const localPlace = safePlaces.find(place => 
-          place.name.toLowerCase().includes(search.toLowerCase()) || 
-          place.type.toLowerCase() === search.toLowerCase()
-        );
-        if (localPlace && city === 'almaty') {
-          console.log('Найдено локальное место:', localPlace);
-          const safeLocation = [localPlace.lng, localPlace.lat];
-          new mapboxgl.Marker({ color: 'green', className: 'safe-marker' })
-            .setLngLat(safeLocation)
-            .setPopup(new mapboxgl.Popup().setHTML(`<p>${localPlace.name}</p>`))
-            .addTo(map);
-
-          // Построить маршрут
-          if (userLocation && Array.isArray(userLocation) && userLocation.length === 2) {
-            console.log('Запрос маршрута для локального места:', { userLocation, safeLocation });
-            fetch(`https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation[0]},${userLocation[1]};${safeLocation[0]},${safeLocation[1]}?alternatives=true&access_token=${mapboxgl.accessToken}`)
-              .then(response => {
-                console.log('Ответ от Directions API (локальное место):', response.status, response.statusText);
-                if (!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
-                return response.json();
-              })
-              .then(data => {
-                console.log('Данные маршрута:', data);
-                if (data.routes && data.routes.length > 0) {
-                  console.log('Маршрут получен:', data.routes);
-                  let safeRoute = data.routes.find(route => isRouteSafe(route, dangerousPlaces));
-                  if (!safeRoute) {
-                    safeRoute = data.routes[0];
-                    console.log('Безопасный маршрут не найден, используется первый:', safeRoute);
-                  }
-                  map.addLayer({
-                    id: 'route',
-                    type: 'line',
-                    source: {
-                      type: 'geojson',
-                      data: {
-                        type: 'Feature',
-                        geometry: safeRoute.geometry
-                      }
-                    },
-                    paint: { 'line-color': '#3887be', 'line-width': 5 }
-                  });
-                } else {
-                  console.log('Маршрут не найден. Ответ API:', data);
-                  alert('Маршрут не найден. Проверьте, доступны ли начальная и конечная точки.');
-                }
-              })
-              .catch(error => {
-                console.error('Ошибка построения маршрута:', error);
-                alert('Ошибка построения маршрута: ' + error.message);
-              });
-          } else {
-            console.log('Геолокация недоступна или неверная:', userLocation);
-            alert('Маршрут не построен: геолокация недоступна.');
-          }
-          return;
-        }
-
-        // Если координаты переданы (из автодополнения)
-        if (coordinates && Array.isArray(coordinates) && coordinates.length === 2) {
+        // Поиск по координатам (из автодополнения)
+        if (coordinates && isValidCoords(coordinates)) {
           console.log('Поиск по координатам:', coordinates);
           const safeLocation = coordinates;
           new mapboxgl.Marker({ color: 'green', className: 'safe-marker' })
             .setLngLat(safeLocation)
-            .setPopup(new mapboxgl.Popup().setHTML(`<p>${searchQuery}</p>`))
+            .setPopup(new mapboxgl.Popup().setHTML(<p>${searchQuery}</p>))
             .addTo(map);
 
-          // Построить маршрут
-          if (userLocation && Array.isArray(userLocation) && userLocation.length === 2) {
-            console.log('Запрос маршрута для координат:', { userLocation, safeLocation });
-            fetch(`https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation[0]},${userLocation[1]};${safeLocation[0]},${safeLocation[1]}?alternatives=true&access_token=${mapboxgl.accessToken}`)
+          if (isValidCoords(userLocation) && isValidCoords(safeLocation)) {
+            console.log('Запрос маршрута:', { userLocation, safeLocation });
+            fetch('https://api.mapbox.com/directions/v5/mapbox/walking/' + userLocation[0] + ',' + userLocation[1] + ';' + safeLocation[0] + ',' + safeLocation[1] + '?geometries=geojson&access_token=' + mapboxgl.accessToken)
               .then(response => {
-                console.log('Ответ от Directions API (координаты):', response.status, response.statusText);
-                if (!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
+                console.log('Directions API:', response.status, response.statusText);
+                if (!response.ok) throw new Error(HTTP ошибка: ${response.status});
                 return response.json();
               })
               .then(data => {
                 console.log('Данные маршрута:', data);
                 if (data.routes && data.routes.length > 0) {
-                  console.log('Маршрут получен:', data.routes);
-                  let safeRoute = data.routes.find(route => isRouteSafe(route, dangerousPlaces));
-                  if (!safeRoute) {
-                    safeRoute = data.routes[0];
-                    console.log('Безопасный маршрут не найден, используется первый:', safeRoute);
+                  const route = data.routes[0];
+                  if (isRouteSafe(route)) {
+                    map.addLayer({
+                      id: 'route',
+                      type: 'line',
+                      source: {
+                        type: 'geojson',
+                        data: {
+                          type: 'Feature',
+                          geometry: route.geometry
+                        }
+                      },
+                      paint: { 'line-color': '#3887be', 'line-width': 5 }
+                    });
+                    map.fitBounds([userLocation, safeLocation], { padding: 50 });
+                  } else {
+                    console.log('Маршрут небезопасен');
+                    alert('Маршрут пересекает опасную зону.');
                   }
-                  map.addLayer({
-                    id: 'route',
-                    type: 'line',
-                    source: {
-                      type: 'geojson',
-                      data: {
-                        type: 'Feature',
-                        geometry: safeRoute.geometry
-                      }
-                    },
-                    paint: { 'line-color': '#3887be', 'line-width': 5 }
-                  });
                 } else {
-                  console.log('Маршрут не найден. Ответ API:', data);
-                  alert('Маршрут не найден. Проверьте, доступны ли начальная и конечная точки.');
+                  console.log('Маршрут не найден:', data);
+                  alert('Маршрут не найден.');
                 }
               })
               .catch(error => {
-                console.error('Ошибка построения маршрута:', error);
+                console.error('Ошибка маршрута:', error);
                 alert('Ошибка построения маршрута: ' + error.message);
               });
           } else {
-            console.log('Геолокация недоступна или неверная:', userLocation);
-            alert('Маршрут не построен: геолокация недоступна.');
+            console.log('Неверные координаты:', { userLocation, safeLocation });
+            alert('Маршрут не построен: неверные координаты.');
           }
-        } else {
-          // Поиск через API
-          console.log('Поиск через MapBox API:', search);
-          fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(search)}.json?proximity=${center[0]},${center[1]}&access_token=${mapboxgl.accessToken}`)
-            .then(response => {
-              console.log('Ответ от Geocoding API:', response.status, response.statusText);
-              if (!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
-              return response.json();
-            })
-            .then(data => {
-              if (data.features && data.features[0]) {
-                console.log('Найдено место:', data.features[0]);
-                const safePlace = data.features[0];
-                const safeLocation = safePlace.center;
-                new mapboxgl.Marker({ color: 'green', className: 'safe-marker' })
-                  .setLngLat(safeLocation)
-                  .setPopup(new mapboxgl.Popup().setHTML(`<p>${safePlace.text}</p>`))
-                  .addTo(map);
+          return;
+        }
 
-                // Построить маршрут
-                if (userLocation && Array.isArray(userLocation) && userLocation.length === 2) {
-                  console.log('Запрос маршрута для места MapBox:', { userLocation, safeLocation });
-                  fetch(`https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation[0]},${userLocation[1]};${safeLocation[0]},${safeLocation[1]}?alternatives=true&access_token=${mapboxgl.accessToken}`)
-                    .then(response => {
-                      console.log('Ответ от Directions API (MapBox):', response.status, response.statusText);
-                      if (!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
-                      return response.json();
-                    })
-                    .then(data => {
-                      console.log('Данные маршрута:', data);
-                      if (data.routes && data.routes.length > 0) {
-                        console.log('Маршрут получен:', data.routes);
-                        let safeRoute = data.routes.find(route => isRouteSafe(route, dangerousPlaces));
-                        if (!safeRoute) {
-                          safeRoute = data.routes[0];
-                          console.log('Безопасный маршрут не найден, используется первый:', safeRoute);
+        // Локальный поиск
+        const localPlace = safePlaces.find(place => 
+          (place.region === city || city === 'kazakhstan') && 
+          (place.name.toLowerCase().includes(search) || place.type.toLowerCase().includes(search))
+        );
+        if (localPlace) {
+          console.log('Локальное место:', localPlace);
+          const safeLocation = [localPlace.lng, localPlace.lat];
+          new mapboxgl.Marker({ color: 'green', className: 'safe-marker' })
+            .setLngLat(safeLocation)
+            .setPopup(new mapboxgl.Popup().setHTML(<p>${localPlace.name}</p>))
+            .addTo(map);
+
+          if (isValidCoords(userLocation) && isValidCoords(safeLocation)) {
+            console.log('Запрос маршрута:', { userLocation, safeLocation });
+            fetch('https://api.mapbox.com/directions/v5/mapbox/walking/' + userLocation[0] + ',' + userLocation[1] + ';' + safeLocation[0] + ',' + safeLocation[1] + '?geometries=geojson&access_token=' + mapboxgl.accessToken)
+              .then(response => {
+                console.log('Directions API:', response.status, response.statusText);
+                if (!response.ok) throw new Error(HTTP ошибка: ${response.status});
+                return response.json();
+              })
+              .then(data => {
+                console.log('Данные маршрута:', data);
+                if (data.routes && data.routes.length > 0) {
+                  const route = data.routes[0];
+                  if (isRouteSafe(route)) {
+                    map.addLayer({
+                      id: 'route',
+                      type: 'line',
+                      source: {
+                        type: 'geojson',
+                        data: {
+                          type: 'Feature',
+                          geometry: route.geometry
                         }
+                      },
+                      paint: { 'line-color': '#3887be', 'line-width': 5 }
+                    });
+                    map.fitBounds([userLocation, safeLocation], { padding: 50 });
+                  } else {
+                    console.log('Маршрут небезопасен');
+                    alert('Маршрут пересекает опасную зону.');
+                  }
+                } else {
+                  console.log('Маршрут не найден:', data);
+                  alert('Маршрут не найден.');
+                }
+              })
+              .catch(error => {
+                console.error('Ошибка маршрута:', error);
+                alert('Ошибка построения маршрута: ' + error.message);
+              });
+          } else {
+            console.log('Неверные координаты:', { userLocation, safeLocation });
+            alert('Маршрут не построен: неверные координаты.');
+          }
+          return;
+        }
+
+        // Поиск через MapBox Geocoding API
+        console.log('Поиск через MapBox:', search);
+        fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent(search) + '.json?proximity=' + center[0] + ',' + center[1] + '&limit=5&access_token=' + mapboxgl.accessToken)
+          .then(response => {
+            console.log('Geocoding API:', response.status, response.statusText);
+            if (!response.ok) throw new Error(HTTP ошибка: ${response.status});
+            return response.json();
+          })
+          .then(data => {
+            if (data.features && data.features.length > 0) {
+              console.log('Найдено через MapBox:', data.features[0]);
+              const safeLocation = data.features[0].center;
+              new mapboxgl.Marker({ color: 'green', className: 'safe-marker' })
+                .setLngLat(safeLocation)
+                .setPopup(new mapboxgl.Popup().setHTML(<p>${data.features[0].text}</p>))
+                .addTo(map);
+
+              if (isValidCoords(userLocation) && isValidCoords(safeLocation)) {
+                console.log('Запрос маршрута:', { userLocation, safeLocation });
+                fetch('https://api.mapbox.com/directions/v5/mapbox/walking/' + userLocation[0] + ',' + userLocation[1] + ';' + safeLocation[0] + ',' + safeLocation[1] + '?geometries=geojson&access_token=' + mapboxgl.accessToken)
+                  .then(response => {
+                    console.log('Directions API:', response.status, response.statusText);
+                    if (!response.ok) throw new Error(HTTP ошибка: ${response.status});
+                    return response.json();
+                  })
+                  .then(data => {
+                    console.log('Данные маршрута:', data);
+                    if (data.routes && data.routes.length > 0) {
+                      const route = data.routes[0];
+                      if (isRouteSafe(route)) {
                         map.addLayer({
                           id: 'route',
                           type: 'line',
@@ -422,48 +420,54 @@
                             type: 'geojson',
                             data: {
                               type: 'Feature',
-                              geometry: safeRoute.geometry
+                              geometry: route.geometry
                             }
                           },
                           paint: { 'line-color': '#3887be', 'line-width': 5 }
                         });
+                        map.fitBounds([userLocation, safeLocation], { padding: 50 });
                       } else {
-                        console.log('Маршрут не найден. Ответ API:', data);
-                        alert('Маршрут не найден. Проверьте, доступны ли начальная и конечная точки.');
+                        console.log('Маршрут небезопасен');
+                        alert('Маршрут пересекает опасную зону.');
                       }
-                    })
-                    .catch(error => {
-                      console.error('Ошибка построения маршрута:', error);
-                      alert('Ошибка построения маршрута: ' + error.message);
-                    });
-                } else {
-                  console.log('Геолокация недоступна или неверная:', userLocation);
-                  alert('Маршрут не построен: геолокация недоступна.');
-                }
+                    } else {
+                      console.log('Маршрут не найден:', data);
+                      alert('Маршрут не найден.');
+                    }
+                  })
+                  .catch(error => {
+                    console.error('Ошибка маршрута:', error);
+                    alert('Ошибка построения маршрута: ' + error.message);
+                  });
               } else {
-                console.log('Место не найдено');
-                alert('Место не найдено');
+                console.log('Неверные координаты:', { userLocation, safeLocation });
+                alert('Маршрут не построен: неверные координаты.');
               }
-            })
-            .catch(error => {
-              console.error('Ошибка поиска:', error);
-              alert('Ошибка поиска: ' + error.message);
-            });
-        }
+            } else {
+              console.log('Место не найдено через MapBox');
+              alert('Место не найдено. Попробуйте другое.');
+            }
+          })
+          .catch(error => {
+            console.error('Ошибка Geocoding API:', error);
+            alert('Ошибка поиска: ' + error.message);
+          });
       }
 
       // Автодополнение
       const searchInput = document.getElementById('search-input');
       const suggestions = document.getElementById('suggestions');
       searchInput.addEventListener('input', () => {
-        const query = searchInput.value;
+        const query = searchInput.value.toLowerCase();
         suggestions.innerHTML = '';
         if (query.length < 2) {
           suggestions.style.display = 'none';
-          console.log('Запрос слишком короткий:', query);
+          console.log('Короткий запрос:', query);
           return;
         }
-        console.log('Автодополнение для:', query);
+        console.log('Автодополнение:', query);
+
+        // Локальное автодополнение
         const queryMap = {
           'полиция': 'police',
           'больница': 'hospital',
@@ -475,56 +479,48 @@
           'магазин': 'shop',
           'парк': 'park',
           'банк': 'bank',
-          'почта': 'post_office',
           'музей': 'museum',
           'театр': 'theatre',
-          'отель': 'hotel',
           'трц': 'shop',
-          'остановка': 'bus_station'
+          'байтерек': 'attraction',
+          'чарын': 'attraction',
+          'шымбулак': 'attraction'
         };
-        const search = queryMap[query.toLowerCase()] || query;
+        const search = queryMap[query] || query;
 
-        // Проверка локальных мест (Алматы)
-        if (city === 'almaty') {
-          const localMatches = safePlaces.filter(place => 
-            place.name.toLowerCase().includes(query.toLowerCase()) || 
-            place.type.toLowerCase().includes(query.toLowerCase())
-          );
-          localMatches.forEach(place => {
-            const item = document.createElement('div');
-            item.className = 'suggestion-item';
-            item.textContent = place.name;
-            item.addEventListener('click', () => {
-              console.log('Выбрано локальное место:', place.name);
-              searchInput.value = place.name;
-              suggestions.style.display = 'none';
-              performSearch(place.name, [place.lng, place.lat]);
-            });
-            suggestions.appendChild(item);
+        const localMatches = safePlaces.filter(place => 
+          (place.region === city || city === 'kazakhstan') && 
+          (place.name.toLowerCase().includes(search) || place.type.toLowerCase().includes(search))
+        );
+        localMatches.forEach(place => {
+          const item = document.createElement('div');
+          item.className = 'suggestion-item';
+          item.textContent = place.name;
+          item.addEventListener('click', () => {
+            console.log('Выбрано локальное:', place.name);
+            searchInput.value = place.name;
+            suggestions.style.display = 'none';
+            performSearch(place.name, [place.lng, place.lat]);
           });
-          if (localMatches.length > 0) {
-            suggestions.style.display = 'block';
-            console.log('Показаны локальные места:', localMatches);
-          }
-        }
+          suggestions.appendChild(item);
+        });
+        console.log('Локальные совпадения:', localMatches);
 
-        // Поиск через API
-        console.log('Запрос автодополнения MapBox:', search);
-        fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(search)}.json?proximity=${center[0]},${center[1]}&access_token=${mapboxgl.accessToken}`)
+        // Автодополнение через MapBox
+        fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent(search) + '.json?proximity=' + center[0] + ',' + center[1] + '&limit=5&access_token=' + mapboxgl.accessToken)
           .then(response => {
-            console.log('Ответ от Geocoding API (автодополнение):', response.status, response.statusText);
-            if (!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
+            console.log('Geocoding API (автодополнение):', response.status, response.statusText);
+            if (!response.ok) throw new Error(HTTP ошибка: ${response.status});
             return response.json();
           })
           .then(data => {
             if (data.features && data.features.length > 0) {
-              console.log('Автодополнение MapBox:', data.features);
               data.features.forEach(feature => {
                 const item = document.createElement('div');
                 item.className = 'suggestion-item';
                 item.textContent = feature.text;
                 item.addEventListener('click', () => {
-                  console.log('Выбрано место MapBox:', feature.text);
+                  console.log('Выбрано MapBox:', feature.text);
                   searchInput.value = feature.text;
                   suggestions.style.display = 'none';
                   performSearch(feature.text, feature.center);
@@ -532,18 +528,18 @@
                 suggestions.appendChild(item);
               });
               suggestions.style.display = 'block';
-            } else if (suggestions.childNodes.length === 0) {
+            } else if (localMatches.length === 0) {
               suggestions.style.display = 'none';
-              console.log('Нет результатов автодополнения');
+              console.log('Нет автодополнения');
             }
           })
           .catch(error => {
             console.error('Ошибка автодополнения:', error);
-            alert('Ошибка автодополнения: ' + error.message);
+            suggestions.style.display = localMatches.length > 0 ? 'block' : 'none';
           });
       });
 
-      // Скрыть автодополнение при клике вне
+      // Скрыть автодополнение
       document.addEventListener('click', (e) => {
         if (!searchInput.contains(e.target) && !suggestions.contains(e.target)) {
           suggestions.style.display = 'none';
@@ -551,23 +547,23 @@
         }
       });
 
-      // Обработчик кнопки поиска
+      // Кнопка поиска
       document.getElementById('search-button').addEventListener('click', () => {
-        const searchQuery = searchInput.value;
-        console.log('Нажата кнопка поиска:', searchQuery);
-        performSearch(searchQuery);
+        const query = searchInput.value;
+        console.log('Поиск по кнопке:', query);
+        performSearch(query);
       });
 
-      // Обработчик Enter
+      // Enter
       searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-          const searchQuery = searchInput.value;
-          console.log('Нажат Enter для поиска:', searchQuery);
-          performSearch(searchQuery);
+          const query = searchInput.value;
+          console.log('Поиск по Enter:', query);
+          performSearch(query);
         }
       });
 
-      // Выполнить начальный поиск, если есть ?search=
+      // Начальный поиск
       if (initialSearch) {
         console.log('Начальный поиск:', initialSearch);
         searchInput.value = initialSearch;

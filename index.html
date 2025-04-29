@@ -1,450 +1,159 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QauipFree - Safe Map of Almaty</title>
-    <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.js"></script>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.css" rel="stylesheet">
-    <script src="https://api.mapbox.com/mapbox-gl-js-plugins/mapbox-gl-directions/v4.1.0/mapbox-gl-directions.js"></script>
-    <link href="https://api.mapbox.com/mapbox-gl-js-plugins/mapbox-gl-directions/v4.1.0/mapbox-gl-directions.css" rel="stylesheet">
-    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
-    <style>
-        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        #search-bar { 
-            position: absolute; 
-            top: 10px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            z-index: 1; 
-            background: white; 
-            padding: 10px; 
-            border-radius: 5px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            display: flex; 
-            align-items: center; 
-        }
-        #search-bar input { 
-            width: 260px; 
-            padding: 8px; 
-            font-size: 16px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            margin-right: 5px; 
-        }
-        #search-button { 
-            background: #007cbf; 
-            border: none; 
-            border-radius: 4px; 
-            padding: 8px; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-        }
-        #search-button:hover { 
-            background: #005f9e; 
-        }
-        #retry-geolocation { 
-            position: absolute; 
-            top: 60px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            z-index: 1; 
-            background: #28a745; 
-            color: white; 
-            border: none; 
-            border-radius: 4px; 
-            padding: 8px 16px; 
-            cursor: pointer; 
-            font-size: 14px; 
-        }
-        #retry-geolocation:hover { 
-            background: #218838; 
-        }
-        #suggestions { 
-            background: white; 
-            max-height: 200px; 
-            overflow-y: auto; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            margin-top: 5px; 
-        }
-        #suggestions div { 
-            padding: 8px; 
-            cursor: pointer; 
-        }
-        #suggestions div:hover { 
-            background: #f0f0f0; 
-        }
-        #route-info { 
-            position: absolute; 
-            top: 100px; 
-            left: 50px; 
-            z-index: 1; 
-            background: white; 
-            padding: 10px; 
-            border-radius: 5px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
-            display: none; 
-        }
-        .danger-marker { 
-            width: 30px; 
-            height: 30px; 
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24"><path fill="red" d="M12 2L1 21h22L12 2z"/><text x="12" y="16" font-size="12" text-anchor="middle" fill="white">!</text></svg>') no-repeat center;
-            background-size: contain;
-            cursor: pointer;
-        }
-        .geolocation-marker { 
-            width: 20px; 
-            height: 20px; 
-            background-color: blue; 
-            border: 2px solid white; 
-            border-radius: 50%; 
-            z-index: 1000; 
-            animation: pulse 2s infinite; 
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.5); opacity: 0.7; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-    </style>
+  <meta charset="utf-8" />
+  <title>QauipFree Map</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100vh; }
+    .mapboxgl-marker.warning-marker {
+      background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMiAyMkgxOCAyMkwxMiAyWiIgZmlsbD0icmVkIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiLz4KPHRleHQgeD0iMTIiIHk9IjE4IiBmb250LXNpemU9IjE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC13ZWlnaHQ9ImJvbGQiPiE8L3RleHQ+Cjwvc3ZnPg==');
+      background-size: 24px 24px;
+      width: 24px;
+      height: 24px;
+    }
+  </style>
 </head>
 <body>
-    <div id="map"></div>
-    <div id="search-bar">
-        <input type="text" id="search-input" placeholder="Enter destination">
-        <button id="search-button">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#210945" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-            </svg>
-        </button>
-        <div id="suggestions"></div>
-    </div>
-    <button id="retry-geolocation">Retry Geolocation</button>
-    <div id="route-info"></div>
+  <div id="map"></div>
+  <script>
+    // Вставь свой MapBox токен здесь
+    mapboxgl.accessToken = 'pk.eyJ1IjoicWF1aXBmcmVlIiwiYSI6ImNtOGN2bG11NjJmMHoyanIzdGh5eWt6ankifQ.h5j64FxBh_zi9G3IdAGpZQ';
 
-    <script>
-        // Mapbox API key
-        const mapboxAccessToken = 'pk.eyJ1IjoicWF1aXBmcmVlIiwiYSI6ImNtOGN2bG11NjJmMHoyanIzdGh5eWt6ankifQ.h5j64FxBh_zi9G3IdAGpZQ';
-        mapboxgl.accessToken = mapboxAccessToken;
+    // Проверка токена
+    if (!mapboxgl.accessToken || mapboxgl.accessToken === 'YOUR_MAPBOX_ACCESS_TOKEN') {
+      console.error('Ошибка: Вставьте валидный MapBox токен');
+      alert('Карта не загрузилась: отсутствует токен MapBox');
+      throw new Error('Неверный токен');
+    }
 
-        // Check API key
-        if (!mapboxAccessToken || mapboxAccessToken === 'YOUR_MAPBOX_ACCESS_TOKEN') {
-            alert('Error: Please insert a valid Mapbox API key from https://account.mapbox.com/.');
-            console.error('Mapbox API key is missing or invalid.');
-        } else {
-            // Check Mapbox GL
-            if (!window.mapboxgl) {
-                alert('Error: Mapbox GL JS failed to load. Check your internet connection.');
-                console.error('Mapbox GL JS is not available.');
-            } else {
-                // Initialize map
-                console.log('Initializing map...');
-                let map;
-                try {
-                    map = new mapboxgl.Map({
-                        container: 'map',
-                        style: 'mapbox://styles/mapbox/streets-v11',
-                        center: [76.945, 43.238], // Almaty center
-                        zoom: 12
-                    });
-                    console.log('Map initialized');
-                } catch (error) {
-                    alert('Error loading map. Check API key or internet connection.');
-                    console.error('Map initialization error:', error);
-                }
+    // Получить параметры из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const city = urlParams.get('city') || 'almaty';
 
-                if (map) {
-                    map.on('load', () => {
-                        console.log('Map loaded');
+    // Координаты и масштаб
+    const cityData = {
+      'almaty': { center: [76.8897, 43.2389], zoom: 12 },
+      'almaty_region': { center: [77.5000, 43.5000], zoom: 8 },
+      'astana': { center: [71.4459, 51.1605], zoom: 12 },
+      'kazakhstan': { center: [66.9237, 48.0196], zoom: 5 }
+    };
+    const { center, zoom } = cityData[city] || cityData['almaty'];
+    console.log('Инициализация: Город:', city, 'Центр:', center, 'Зум:', zoom);
 
-                        // Danger zones
-                        const dangerZones = [
-                            { coordinates: [76.900, 43.270], reason: "Increased likelihood of conflicts in the area (GRES)" },
-                            { coordinates: [76.980, 43.280], reason: "Frequent public order violations (Turksib District)" },
-                            { coordinates: [76.850, 43.120], reason: "Suspicious group activity (Shymbulak)" },
-                            { coordinates: [76.820, 43.150], reason: "Reports of suspicious behavior posing a safety threat (Tuzdybastau)" },
-                            { coordinates: [76.900, 43.270], reason: "Reported kidnapping attempts (GRES)" },
-                            { coordinates: [76.940, 43.260], reason: "High frequency of personal item thefts (Sayakhat)" },
-                            { coordinates: [76.910, 43.230], reason: "Public order violations, unsafe environment (Pyatiletka)" },
-                            { coordinates: [76.960, 43.240], reason: "Reported attempts of forced vehicle entry (Zhetysu)" },
-                            { coordinates: [76.920, 43.220], reason: "Increased criminal activity in the evening (Orbita)" },
-                            { coordinates: [76.970, 43.050], reason: "Reports of thefts in tourist areas (Kapchagay)" }
-                        ];
+    // Инициализация карты
+    let map;
+    try {
+      map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: center,
+        zoom: zoom
+      });
+      console.log('Карта успешно инициализирована');
+    } catch (error) {
+      console.error('Ошибка инициализации карты:', error);
+      alert('Не удалось загрузить карту. Проверьте токен и интернет.');
+      throw error;
+    }
 
-                        // Add danger zone markers
-                        dangerZones.forEach(zone => {
-                            const el = document.createElement('div');
-                            el.className = 'danger-marker';
-                            try {
-                                new mapboxgl.Marker({ element: el, anchor: 'center' })
-                                    .setLngLat(zone.coordinates)
-                                    .setPopup(new mapboxgl.Popup().setText(zone.reason))
-                                    .addTo(map);
-                                console.log(`Marker added: ${zone.reason} at ${zone.coordinates}`);
-                            } catch (error) {
-                                console.error('Marker addition error:', error);
-                            }
-                        });
+    // Опасные места
+    const dangerousPlaces = [
+      { lng: 76.8897, lat: 43.2389, desc: 'Алматы: центр, высокая преступность' },
+      { lng: 76.9667, lat: 43.2333, desc: 'Медеуский район: кражи' },
+      { lng: 76.8667, lat: 43.3167, desc: 'Алатауский район: Шанырак' },
+      { lng: 71.4295, lat: 51.1282, desc: 'Астана: Байтерек, мелкие кражи' },
+      { lng: 71.4000, lat: 51.1000, desc: 'Астана: Mega Silk Way' }
+    ];
 
-                        // Geolocation
-                        let geolocationMarker = null;
-                        let watchId = null;
-                        let attempts = 0;
-                        const maxAttempts = 5;
+    // Геолокация
+    let userLocation = null;
+    let userMarker = null;
+    const dangerRadius = 0.01; // ~1 км
 
-                        function isValidCoordinate(lng, lat) {
-                            // Reject zero or invalid coordinates
-                            return lng !== 0 && lat !== 0 && lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90;
-                        }
-
-                        function updateGeolocationMarker(lng, lat) {
-                            if (!isValidCoordinate(lng, lat)) {
-                                console.warn(`Invalid coordinates: [${lng}, ${lat}]`);
-                                alert('Invalid location data received. Please ensure GPS is enabled and try again.');
-                                return;
-                            }
-
-                            if (geolocationMarker) geolocationMarker.remove();
-                            const el = document.createElement('div');
-                            el.className = 'geolocation-marker';
-                            geolocationMarker = new mapboxgl.Marker({ element: el })
-                                .setLngLat([lng, lat])
-                                .setPopup(new mapboxgl.Popup().setText(`Your Location: [${lng.toFixed(4)}, ${lat.toFixed(4)}]`))
-                                .addTo(map);
-                            console.log(`Geolocation marker set at [${lng}, ${lat}]`);
-
-                            // Center map on user location
-                            map.jumpTo({ center: [lng, lat], zoom: 14 });
-                            console.log(`Map centered at [${lng}, ${lat}]`);
-                        }
-
-                        function tryGeolocation() {
-                            if (!navigator.geolocation) {
-                                alert('Error: Geolocation is not supported by your browser or device.');
-                                console.error('Geolocation not supported');
-                                return;
-                            }
-
-                            // Check permission state
-                            if (navigator.permissions && navigator.permissions.query) {
-                                navigator.permissions.query({ name: 'geolocation' }).then(permissionStatus => {
-                                    console.log('Geolocation permission:', permissionStatus.state);
-                                    if (permissionStatus.state === 'denied') {
-                                        alert('Geolocation access denied. Please allow location access:\n1. In your browser, click the location icon in the address bar and select "Allow".\n2. In Thunkable app settings, go to Permissions and enable Location.');
-                                    }
-                                });
-                            }
-
-                            if (attempts >= maxAttempts) {
-                                alert('Failed to get location after multiple attempts. Please ensure GPS is enabled and location access is allowed, then click "Retry Geolocation".');
-                                return;
-                            }
-
-                            attempts++;
-
-                            // Initial position
-                            navigator.geolocation.getCurrentPosition(
-                                (position) => {
-                                    const { longitude, latitude, accuracy } = position.coords;
-                                    console.log(`Initial geolocation: [${longitude}, ${latitude}], Accuracy: ${accuracy} meters`);
-                                    updateGeolocationMarker(longitude, latitude);
-                                },
-                                (error) => {
-                                    console.error('Initial geolocation error:', error.message, 'Code:', error.code);
-                                    // Retry
-                                    setTimeout(tryGeolocation, 3000);
-                                },
-                                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                            );
-
-                            // Continuous updates
-                            watchId = navigator.geolocation.watchPosition(
-                                (position) => {
-                                    const { longitude, latitude, accuracy } = position.coords;
-                                    console.log(`Geolocation update: [${longitude}, ${latitude}], Accuracy: ${accuracy} meters`);
-                                    updateGeolocationMarker(longitude, latitude);
-                                    attempts = 0; // Reset attempts on success
-                                },
-                                (error) => {
-                                    let message = 'Unable to determine location. Please enable geolocation in your device settings.';
-                                    if (error.code === 1) {
-                                        message = 'Geolocation access denied. Please allow location access:\n1. In your browser, click the location icon in the address bar and select "Allow".\n2. In Thunkable app settings, go to Permissions and enable Location.';
-                                    } else if (error.code === 2) {
-                                        message = 'Geolocation unavailable. Ensure GPS is enabled and check your network connection.';
-                                    } else if (error.code === 3) {
-                                        message = 'Geolocation timed out. Try again.';
-                                    }
-                                    alert(message);
-                                    console.error('Geolocation error:', error.message, 'Code:', error.code);
-                                    // Retry
-                                    setTimeout(tryGeolocation, 3000);
-                                },
-                                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                            );
-                        }
-
-                        // Manual retry button
-                        document.getElementById('retry-geolocation').addEventListener('click', () => {
-                            console.log('Retry geolocation clicked');
-                            if (watchId !== null) {
-                                navigator.geolocation.clearWatch(watchId);
-                                watchId = null;
-                            }
-                            attempts = 0;
-                            tryGeolocation();
-                        });
-
-                        // Start geolocation after map load
-                        setTimeout(() => {
-                            console.log('Starting geolocation...');
-                            tryGeolocation();
-                        }, 5000);
-
-                        // Clean up on page unload
-                        window.addEventListener('unload', () => {
-                            if (watchId !== null) {
-                                navigator.geolocation.clearWatch(watchId);
-                                console.log('Geolocation watch cleared');
-                            }
-                        });
-
-                        // Mapbox Directions
-                        if (!window.MapboxDirections) {
-                            console.warn('Mapbox Directions not available. Routes will not be built.');
-                        } else {
-                            let directions;
-                            try {
-                                directions = new MapboxDirections({
-                                    accessToken: mapboxAccessToken,
-                                    unit: 'metric',
-                                    profile: 'mapbox/walking',
-                                    controls: { inputs: false, instructions: false },
-                                    waypoints: []
-                                });
-                                map.addControl(directions, 'top-left');
-                                console.log('Mapbox Directions initialized');
-                            } catch (error) {
-                                console.error('Mapbox Directions initialization error:', error);
-                            }
-
-                            // Route building
-                            window.buildRoute = function(destination) {
-                                console.log('Building route to:', destination);
-                                const userLocation = geolocationMarker
-                                    ? geolocationMarker.getLngLat()
-                                    : [76.945, 43.238];
-                                console.log('User location:', userLocation);
-
-                                if (!directions) {
-                                    alert('Error: Mapbox Directions not initialized. Ensure your API key includes Directions API access at https://account.mapbox.com/.');
-                                    console.error('Directions not initialized');
-                                    return;
-                                }
-
-                                try {
-                                    directions.setOrigin(null);
-                                    directions.setDestination(null);
-                                    directions.setOrigin(userLocation);
-                                    directions.setDestination(destination);
-                                    console.log('Route set from', userLocation, 'to', destination);
-                                } catch (error) {
-                                    console.error('Route setting error:', error);
-                                    alert('Error building route. Try again.');
-                                    return;
-                                }
-
-                                directions.on('route', (e) => {
-                                    console.log('Route built:', e.route);
-                                    const route = e.route[0];
-                                    const distance = (route.distance / 1000).toFixed(2);
-                                    const duration = (route.duration / 60).toFixed(0);
-                                    const routeInfo = document.getElementById('route-info');
-                                    routeInfo.style.display = 'block';
-                                    routeInfo.innerHTML = `Distance: ${distance} km<br>Time: ${duration} min`;
-
-                                    const routeCoordinates = route.geometry.coordinates;
-                                    let isSafe = true;
-                                    if (window.turf) {
-                                        dangerZones.forEach(zone => {
-                                            routeCoordinates.forEach(coord => {
-                                                try {
-                                                    const distance = turf.distance(turf.point(coord), turf.point(zone.coordinates), { units: 'kilometers' });
-                                                    if (distance < 0.2) isSafe = false;
-                                                } catch (error) {
-                                                    console.error('Distance calculation error:', error);
-                                                }
-                                            });
-                                        });
-                                        if (!isSafe) {
-                                            alert('Warning: Route passes through dangerous areas.');
-                                        }
-                                    } else {
-                                        console.warn('Turf.js not loaded, danger zone check skipped');
-                                    }
-                                });
-                            };
-                        }
-                    });
-
-                    // Search
-                    const searchInput = document.getElementById('search-input');
-                    const suggestions = document.getElementById('suggestions');
-                    const searchButton = document.getElementById('search-button');
-
-                    function performSearch(query) {
-                        if (query.length < 3) {
-                            suggestions.innerHTML = '<div>Enter at least 3 characters</div>';
-                            return;
-                        }
-
-                        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxAccessToken}&limit=5&country=kz`;
-                        console.log('Geocoding request:', url);
-                        fetch(url)
-                            .then(response => {
-                                if (!response.ok) throw new Error(`Geocoding error: ${response.status}`);
-                                return response.json();
-                            })
-                            .then(data => {
-                                console.log('Search results:', data.features);
-                                suggestions.innerHTML = '';
-                                if (data.features.length === 0) {
-                                    suggestions.innerHTML = '<div>No results found. Try a different query, e.g., "Green Bazaar, Almaty".</div>';
-                                } else {
-                                    data.features.forEach(feature => {
-                                        const div = document.createElement('div');
-                                        div.textContent = feature.place_name;
-                                        div.onclick = () => {
-                                            searchInput.value = feature.place_name;
-                                            suggestions.innerHTML = '';
-                                            buildRoute(feature.geometry.coordinates);
-                                        };
-                                        suggestions.appendChild(div);
-                                    });
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Geocoding error:', error);
-                                suggestions.innerHTML = '<div>Search error. Check internet or ensure your API key includes Geocoding API access at https://account.mapbox.com/.</div>';
-                            });
-                    }
-
-                    searchInput.addEventListener('input', (e) => {
-                        suggestions.innerHTML = '';
-                        const query = e.target.value;
-                        if (query.length < 3) return;
-                        setTimeout(() => performSearch(query), 300);
-                    });
-
-                    searchButton.addEventListener('click', () => {
-                        performSearch(searchInput.value);
-                    });
-                }
-            }
+    function checkDangerProximity(coords) {
+      for (let place of dangerousPlaces) {
+        const dist = Math.sqrt(
+          Math.pow(coords[0] - place.lng, 2) + Math.pow(coords[1] - place.lat, 2)
+        );
+        if (dist < dangerRadius) {
+          console.log('Пользователь рядом с опасной зоной:', place.desc);
+          alert(`Осторожно! Вы рядом с опасной зоной: ${place.desc}`);
+          return true;
         }
-    </script>
+      }
+      console.log('Пользователь в безопасной зоне');
+      return false;
+    }
+
+    map.on('load', () => {
+      console.log('Карта полностью загружена');
+
+      // Добавление опасных мест
+      try {
+        dangerousPlaces.forEach(place => {
+          new mapboxgl.Marker({ className: 'warning-marker' })
+            .setLngLat([place.lng, place.lat])
+            .setPopup(new mapboxgl.Popup().setHTML(<p>${place.desc}</p>))
+            .addTo(map);
+        });
+        console.log('Опасные места добавлены:', dangerousPlaces.length);
+      } catch (error) {
+        console.error('Ошибка добавления опасных мест:', error);
+        alert('Ошибка добавления опасных зон');
+      }
+
+      // Инициализация геолокации
+      try {
+        navigator.geolocation.watchPosition(
+          (position) => {
+            userLocation = [position.coords.longitude, position.coords.latitude];
+            console.log('Геолокация обновлена:', userLocation);
+
+            // Обновление маркера
+            if (userMarker) {
+              userMarker.setLngLat(userLocation);
+            } else {
+              userMarker = new mapboxgl.Marker({ color: 'blue' })
+                .setLngLat(userLocation)
+                .addTo(map);
+            }
+
+            // Центрирование карты
+            map.setCenter(userLocation);
+
+            // Проверка близости к опасным зонам
+            checkDangerProximity(userLocation);
+          },
+          (error) => {
+            console.error('Ошибка геолокации:', error);
+            userLocation = cityData[city].center;
+            console.log('Используется центр региона:', userLocation);
+            alert('Геолокация недоступна. Используется центр региона.');
+            if (!userMarker) {
+              userMarker = new mapboxgl.Marker({ color: 'blue' })
+                .setLngLat(userLocation)
+                .addTo(map);
+              map.setCenter(userLocation);
+            }
+          },
+          { timeout: 10000, maximumAge: 0, enableHighAccuracy: true }
+        );
+        console.log('Геолокация настроена');
+      } catch (error) {
+        console.error('Ошибка настройки геолокации:', error);
+        alert('Ошибка настройки геолокации');
+      }
+    });
+
+    // Обработка ошибок карты
+    map.on('error', (error) => {
+      console.error('Ошибка загрузки карты:', error);
+      alert('Ошибка загрузки карты: ' + error.message);
+    });
+  </script>
 </body>
 </html>

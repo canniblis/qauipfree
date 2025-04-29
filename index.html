@@ -175,19 +175,27 @@
                         // Geolocation
                         let geolocationMarker = null;
                         let watchId = null;
+                        let lastLng = null;
+                        let lastLat = null;
 
                         function updateGeolocationMarker(lng, lat) {
-                            if (geolocationMarker) geolocationMarker.remove();
-                            const el = document.createElement('div');
-                            el.className = 'geolocation-marker';
-                            geolocationMarker = new mapboxgl.Marker({ element: el })
-                                .setLngLat([lng, lat])
-                                .addTo(map);
-                            console.log(`Geolocation marker added at [${lng}, ${lat}]`);
+                            // Only update if position changed significantly
+                            if (!lastLng || Math.abs(lng - lastLng) > 0.0001 || Math.abs(lat - lastLat) > 0.0001) {
+                                if (geolocationMarker) geolocationMarker.remove();
+                                const el = document.createElement('div');
+                                el.className = 'geolocation-marker';
+                                geolocationMarker = new mapboxgl.Marker({ element: el })
+                                    .setLngLat([lng, lat])
+                                    .setPopup(new mapboxgl.Popup().setText('Your Location'))
+                                    .addTo(map);
+                                console.log(`Geolocation marker updated at [${lng}, ${lat}]`);
 
-                            // Center map on user location
-                            map.setCenter([lng, lat]);
-                            map.setZoom(14);
+                                // Center map on user location
+                                map.easeTo({ center: [lng, lat], zoom: 14, duration: 1000 });
+
+                                lastLng = lng;
+                                lastLat = lat;
+                            }
                         }
 
                         function tryGeolocation() {
@@ -197,24 +205,25 @@
                                 return;
                             }
 
-                            // Start watching position
                             watchId = navigator.geolocation.watchPosition(
                                 (position) => {
                                     const { longitude, latitude } = position.coords;
-                                    console.log('Geolocation successful:', [longitude, latitude]);
+                                    console.log('Geolocation successful:', [longitude, latitude], 'Accuracy:', position.coords.accuracy);
                                     updateGeolocationMarker(longitude, latitude);
                                 },
                                 (error) => {
                                     let message = 'Unable to determine location. Please enable geolocation in your device settings.';
                                     if (error.code === 1) {
-                                        message = 'Geolocation access denied. Please allow location access:\n1. In your browser, click the location icon in the address bar and select "Allow".\n2. In Thunkable app settings, enable Location permission.';
+                                        message = 'Geolocation access denied. Please allow location access:\n1. In your browser, click the location icon in the address bar and select "Allow".\n2. In Thunkable app settings, go to Permissions and enable Location.';
                                     } else if (error.code === 2) {
-                                        message = 'Geolocation unavailable. Check your device GPS or network connection.';
+                                        message = 'Geolocation unavailable. Ensure GPS is enabled and check your network connection.';
                                     } else if (error.code === 3) {
                                         message = 'Geolocation timed out. Try again.';
                                     }
                                     alert(message);
                                     console.error('Geolocation error:', error.message, 'Code:', error.code);
+                                    // Retry every 3 seconds
+                                    setTimeout(tryGeolocation, 3000);
                                 },
                                 { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                             );

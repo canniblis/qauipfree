@@ -111,14 +111,12 @@
           .addTo(map);
         // Обработчик события deviceorientation
         window.addEventListener('deviceorientation', (event) => {
-          const alpha = event.alpha;
-          userMarkerElement.style.transform = `rotate(${alpha}deg)`;
+          const heading = event.alpha;
+          userMarkerElement.style.transform = `rotate(${-heading}deg)`;
         });
 
 
-        new mapboxgl.Marker(userMarkerElement)
-          .setLngLat(userLocation)
-          .addTo(map);
+        
       }, (error) => {
         console.log('Геолокация не доступна: ', error);
       });

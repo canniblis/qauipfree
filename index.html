@@ -102,7 +102,9 @@
         const userLocation = [position.coords.longitude, position.coords.latitude];
         map.setCenter(userLocation);
         map.setZoom(12);
-        new mapboxgl.Marker({ element: document.createElement('div'), className: 'user-marker' })
+       const userMarkerElement = document.createElement('div');
+        userMarkerElement.className = 'user-marker';
+        new mapboxgl.Marker(userMarkerElement)
           .setLngLat(userLocation)
           .addTo(map);
       }, (error) => {

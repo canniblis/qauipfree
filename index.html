@@ -102,8 +102,20 @@
         const userLocation = [position.coords.longitude, position.coords.latitude];
         map.setCenter(userLocation);
         map.setZoom(12);
+
+        // Добавить маркер пользователя
        const userMarkerElement = document.createElement('div');
         userMarkerElement.className = 'user-marker';
+        const userMarker = new mapboxgl.Marker(userMarkerElement)
+          .setLngLat(userLocation)
+          .addTo(map);
+        // Обработчик события deviceorientation
+        window.addEventListener('deviceorientation', (event) => {
+          const alpha = event.alpha;
+          userMarkerElement.style.transform = `rotate(${alpha}deg)`;
+        });
+
+
         new mapboxgl.Marker(userMarkerElement)
           .setLngLat(userLocation)
           .addTo(map);

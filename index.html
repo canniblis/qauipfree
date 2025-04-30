@@ -12,6 +12,7 @@
       width: 100vw;
       height: 100vh;
       min-height: 100vh;
+      background: #f0f0f0; /* Фон для диагностики */
       box-sizing: border-box;
     }
     .warning-marker {
@@ -88,13 +89,15 @@
     }
 
     // Проверка канваса
-    const canvas = mapContainer.querySelector('canvas');
-    if (!canvas) {
-      console.error('Ошибка: Канвас карты не создан');
-      alert('Канвас карты не создан. Проверьте токен или WebGL.');
-    } else {
-      console.log('Канвас карты создан, размеры:', canvas.width, 'x', canvas.height);
-    }
+    setTimeout(() => {
+      const canvas = mapContainer.querySelector('canvas');
+      if (!canvas) {
+        console.error('Ошибка: Канвас карты не создан');
+        alert('Канвас карты не создан. Проверьте токен или WebGL.');
+      } else {
+        console.log('Канвас карты создан, размеры:', canvas.width, 'x', canvas.height);
+      }
+    }, 1000);
 
     // Опасные места
     const dangerousPlaces = [
@@ -120,7 +123,7 @@
         );
         if (dist < dangerRadius) {
           console.log('Опасная зона:', place.desc);
-          alert(Осторожно! Вы рядом с опасной зоной: ${place.desc});
+          alert(`Осторожно! Вы рядом с опасной зоной: ${place.desc}`);
           return true;
         }
       }
@@ -138,12 +141,13 @@
           // Обновление маркера
           if (userMarker) {
             userMarker.setLngLat(userLocation);
+            console.log('Синий маркер обновлён:', userLocation);
           } else {
             userMarker = new mapboxgl.Marker({ color: 'blue' })
               .setLngLat(userLocation)
               .addTo(map);
+            console.log('Синий маркер добавлен:', userLocation);
           }
-          console.log('Синий маркер добавлен:', userLocation);
 
           // Центрирование
           map.setCenter(userLocation);
@@ -153,7 +157,7 @@
           checkDangerProximity(userLocation);
         },
         (error) => {
-          console.error('Ошибка геолокации:', error);
+          console.error('Ошибка геолокации:', error.message);
           userLocation = center;
           console.log('Используется центр региона:', userLocation);
           alert('Геолокация недоступна. Используется центр региона.');
@@ -161,8 +165,8 @@
             userMarker = new mapboxgl.Marker({ color: 'blue' })
               .setLngLat(userLocation)
               .addTo(map);
+            console.log('Синий маркер добавлен (резерв):', userLocation);
           }
-          console.log('Синий маркер добавлен (резерв):', userLocation);
           map.setCenter(userLocation);
         },
         { timeout: 10000, maximumAge: 0, enableHighAccuracy: true }

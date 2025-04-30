@@ -8,65 +8,14 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.css" rel="stylesheet" />
   <style>
     body { margin: 0; padding: 0; }
-    #map {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 100%;
-      background: #f0f0f0; /* Фон для диагностики */
-    }
-    .warning-marker {
-      width: 0;
-      height: 0;
-      border-left: 10px solid transparent;
-      border-right: 10px solid transparent;
-      border-bottom: 20px solid red;
-      cursor: pointer;
-    }
-    .user-marker {
-      width: 20px;
-      height: 20px;
-      background-color: blue;
-      border-radius: 50%;
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.4; }
-      100% { opacity: 1; }
-    }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <script>
-    // MapBox токен
+    // Вставь свой MapBox токен здесь
     mapboxgl.accessToken = 'pk.eyJ1IjoicWF1aXBmcmVlIiwiYSI6ImNtYTN6YTBrbTAxOXYycnM4ZjE4ZG9sejIifQ.UxK3klpjrLBMMUW7FwG24g';
-
-    // Проверка токена
-    if (!mapboxgl.accessToken) {
-      console.error('Ошибка: Отсутствует MapBox токен');
-      alert('Карта не загрузилась: отсутствует токен MapBox');
-      throw new Error('Неверный токен');
-    }
-    console.log('Токен:', mapboxgl.accessToken.slice(0, 10) + '...');
-
-    // Проверка WebGL
-    if (!mapboxgl.supported()) {
-      console.error('Ошибка: WebGL не поддерживается');
-      alert('Ваш браузер не поддерживает WebGL. Попробуйте другой браузер.');
-      throw new Error('WebGL не поддерживается');
-    }
-    console.log('WebGL поддерживается');
-
-    // Проверка контейнера
-    const mapContainer = document.getElementById('map');
-    if (!mapContainer) {
-      console.error('Ошибка: Контейнер #map не найден');
-      alert('Ошибка: Контейнер карты не найден');
-      throw new Error('Контейнер #map отсутствует');
-    }
-    console.log('Контейнер #map, размеры:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
 
     // Получить параметр city из URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -93,107 +42,84 @@
     // Установить центр и масштаб
     const { center, zoom } = cityData[city] || cityData['kazakhstan'];
 
-    // Инициализация карты
-    let map;
-    try {
-      map = new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/mapbox/streets-v11',
-        center: center,
-        zoom: zoom
-      });
-      console.log('Карта инициализирована');
-    } catch (error) {
-      console.error('Ошибка инициализации карты:', error);
-      alert('Ошибка загрузки карты. Проверьте токен и интернет.');
-      throw error;
-    }
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: center,
+      zoom: zoom
+    });
 
-    // Проверка канваса
-    setTimeout(() => {
-      const canvas = mapContainer.querySelector('canvas');
-      if (!canvas) {
-        console.error('Ошибка: Канвас карты не создан');
-        alert('Канвас карты не создан. Проверьте токен или WebGL.');
-      } else {
-        console.log('Канвас карты создан, размеры:', canvas.width, 'x', canvas.height);
-      }
-    }, 1000);
-
-    // Опасные места
+    // Опасные регионы и районы
     const dangerousPlaces = [
-      { lng: 77.0220, lat: 43.4260, desc: 'ГРЭС, Отеген Батыр: Навязчивое внимание и попытки похищения' },
+      // Регионы Казахстана
+      { lng: 76.8897, lat: 43.2389, desc: 'Алматы: 24,965 преступлений (18.8%), кражи, мошенничества, убийства' },
+      { lng: 71.4491, lat: 51.1694, desc: 'Астана: 17,339 преступлений (13.1%), лидер по тяжким преступлениям' },
+      { lng: 77.0112, lat: 43.9966, desc: 'Алматинская область: 10,385 преступлений (7.8%), убийства, изнасилования' },
+      { lng: 73.1094, lat: 49.8047, desc: 'Карагандинская область: 7,562 преступления (5.7%), мошенничества, кражи' },
+      { lng: 51.1500, lat: 43.6500, desc: 'Мангистауская область: рост на 12.2% (3,474 преступления)' },
+      { lng: 51.8833, lat: 47.1167, desc: 'Атырауская область: рост на 8.5% (4,647 преступлений), низкая раскрываемость' },
+      { lng: 76.9674, lat: 52.2873, desc: 'Павлодарская область: рост на 5.6% (5,322 преступления), кражи' },
+      { lng: 65.5092, lat: 44.8488, desc: 'Кызылординская область: рост на 4.6% (3,003 преступления), наркотики' },
+      { lng: 66.6750, lat: 48.5481, desc: 'Улытауская область: рост на 2.8% (1,314 преступлений)' },
+      { lng: 69.4167, lat: 51.9167, desc: 'Акмолинская область: рост на 0.7% (5,120 преступлений)' },
+      // Районы Алматы
+      { lng: 76.9667, lat: 43.2333, desc: 'Медеуский район, Алматы: кражи, грабежи у Центрального рынка и “Рамстора”' },
+      { lng: 76.8667, lat: 43.3167, desc: 'Алатауский район, Алматы: криминогенные микрорайоны Шанырак, Улжан' },
+      { lng: 76.9167, lat: 43.2167, desc: 'Бостандыкский район, Алматы: угоны, квартирные кражи' },
+      { lng: 76.8833, lat: 43.2667, desc: 'Микрорайон Орбита, Алматы: уличная преступность' },
+      { lng: 76.9400, lat: 43.2600, desc: 'Зелёный базар, Алматы: кражи в местах массового скопления' },
+      { lng: 77.0220, lat: 43.4260, desc: 'ГРЭС: Навязчивое внимание и попытки похищения' },
       { lng: 76.9200, lat: 43.3000, desc: 'Турксибский район: Назойливое поведение' },
       { lng: 76.9800, lat: 43.1300, desc: 'Шымбулак: Подозрительная активность групп лиц' },
       { lng: 76.9100, lat: 43.2600, desc: 'Саяхат: Риск краж личных вещей' },
       { lng: 76.9300, lat: 43.2800, desc: 'Микрорайон Жетысу: Попытки принуждения к поездке' },
       { lng: 71.4295, lat: 51.1282, desc: 'Астана, Байтерек: Мелкие кражи' }
+
     ];
+    dangerousPlaces.forEach(place => {
+      new mapboxgl.Marker({ color: 'red' })
+        .setLngLat([place.lng, place.lat])
+        .setPopup(new mapboxgl.Popup().setHTML(`<p>${place.desc}</p>`))
+        .addTo(map);
+    });
 
-    // Добавление маркеров
-    map.on('load', () => {
-      console.log('Карта загружена');
-      dangerousPlaces.forEach(place => {
-        console.log('Добавление маркера:', place.desc, [place.lng, place.lat]);
-        new mapboxgl.Marker({
-          element: document.createElement('div'),
-          className: 'warning-marker'
-        })
-          .setLngLat([place.lng, place.lat])
-          .setPopup(new mapboxgl.Popup().setHTML(<p>${place.desc}</p>))
+    // Геолокация пользователя
+    if (city === 'kazakhstan') {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const userLocation = [position.coords.longitude, position.coords.latitude];
+        map.setCenter(userLocation);
+        map.setZoom(12);
+        new mapboxgl.Marker({ element: document.createElement('div'), className: 'user-marker' })
+          .setLngLat(userLocation)
           .addTo(map);
+      }, (error) => {
+        console.log('Геолокация не доступна: ', error);
       });
-      console.log('Опасные места добавлены:', dangerousPlaces.length);
+    }
 
-      // Геолокация пользователя
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const userLocation = [position.coords.longitude, position.coords.latitude];
-          console.log('Геолокация:', userLocation);
-          map.setCenter(userLocation);
-          map.setZoom(12);
-
-          const userMarker = new mapboxgl.Marker({
-            element: document.createElement('div'),
-            className: 'user-marker'
-          })
-            .setLngLat(userLocation)
-            .addTo(map);
-          console.log('Синий мигающий кружок добавлен:', userLocation);
-
-          // Проверка близости к опасным местам
-          const dangerRadius = 0.01; // ~1 км
-          dangerousPlaces.forEach(place => {
-            const dist = Math.sqrt(
-              Math.pow(userLocation[0] - place.lng, 2) + Math.pow(userLocation[1] - place.lat, 2)
-            );
-            if (dist < dangerRadius) {
-              console.log('Опасная зона:', place.desc);
-              alert(`Осторожно! Вы рядом с опасной зоной: ${place.desc}`);
+    // Пример маршрута в Алматы (от точки в городе до полицейского участка)
+    if (city === 'almaty' || city.includes('almaty-')) {
+      map.on('load', () => {
+        fetch(`https://api.mapbox.com/directions/v5/mapbox/walking/76.9000,43.2500;76.9500,43.2500?access_token=${mapboxgl.accessToken}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.routes && data.routes[0]) {
+              map.addLayer({
+                id: 'route',
+                type: 'line',
+                source: {
+                  type: 'geojson',
+                  data: {
+                    type: 'Feature',
+                    geometry: data.routes[0].geometry
+                  }
+                },
+                paint: { 'line-color': '#3887be', 'line-width': 5 }
+              });
             }
           });
-        },
-        (error) => {
-          console.error('Ошибка геолокации:', error.message);
-          console.log('Используется центр региона:', center);
-          alert('Геолокация недоступна. Используется центр региона.');
-          map.setCenter(center);
-          new mapboxgl.Marker({
-            element: document.createElement('div'),
-            className: 'user-marker'
-          })
-            .setLngLat(center)
-            .addTo(map);
-        },
-        { timeout: 10000, maximumAge: 0, enableHighAccuracy: true }
-      );
-    });
-
-    // Обработка ошибок карты
-    map.on('error', (error) => {
-      console.error('Ошибка загрузки карты:', error);
-      alert('Ошибка загрузки карты: ' + error.message);
-    });
+      });
+    }
   </script>
 </body>
 </html>

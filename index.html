@@ -111,7 +111,10 @@
           .addTo(map);
         // Обработчик события deviceorientation
         window.addEventListener('deviceorientation', (event) => {
-          const heading = event.alpha;
+            // Получаем угол поворота вокруг оси Z (в градусах)
+          const heading = event.alpha; // Угол в градусах
+          
+          // Поворачиваем маркер в соответствии с направлением устройства
           userMarkerElement.style.transform = `rotate(${-heading}deg)`;
         });
 

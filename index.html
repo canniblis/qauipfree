@@ -14,14 +14,13 @@
       min-height: 100vh;
       box-sizing: border-box;
     }
-    .warning-marker::before {
-      content: '';
-      display: block;
+    .warning-marker {
       width: 0;
       height: 0;
       border-left: 10px solid transparent;
       border-right: 10px solid transparent;
       border-bottom: 20px solid red;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -29,7 +28,7 @@
   <div id="map"></div>
   <script>
     // Вставь свой MapBox токен здесь
-    mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
+    mapboxgl.accessToken = 'pk.eyJ1IjoicWF1aXBmcmVlIiwiYSI6ImNtOGN2bG11NjJmMHoyanIzdGh5eWt6ankifQ.h5j64FxBh_zi9G3IdAGpZQ';
 
     // Проверка токена
     if (!mapboxgl.accessToken || mapboxgl.accessToken === 'YOUR_MAPBOX_ACCESS_TOKEN') {
@@ -121,7 +120,7 @@
         );
         if (dist < dangerRadius) {
           console.log('Опасная зона:', place.desc);
-          alert(`Осторожно! Вы рядом с опасной зоной: ${place.desc}`);
+          alert(Осторожно! Вы рядом с опасной зоной: ${place.desc});
           return true;
         }
       }
@@ -130,10 +129,11 @@
     }
 
     function updateGeolocation() {
+      console.log('Запуск геолокации');
       navigator.geolocation.getCurrentPosition(
         (position) => {
           userLocation = [position.coords.longitude, position.coords.latitude];
-          console.log('Геолокация:', userLocation);
+          console.log('Геолокация получена:', userLocation);
 
           // Обновление маркера
           if (userMarker) {
@@ -143,9 +143,11 @@
               .setLngLat(userLocation)
               .addTo(map);
           }
+          console.log('Синий маркер добавлен:', userLocation);
 
           // Центрирование
           map.setCenter(userLocation);
+          console.log('Карта центрирована:', userLocation);
 
           // Проверка опасных зон
           checkDangerProximity(userLocation);
@@ -153,14 +155,15 @@
         (error) => {
           console.error('Ошибка геолокации:', error);
           userLocation = center;
-          console.log('Центр региона:', userLocation);
+          console.log('Используется центр региона:', userLocation);
           alert('Геолокация недоступна. Используется центр региона.');
           if (!userMarker) {
             userMarker = new mapboxgl.Marker({ color: 'blue' })
               .setLngLat(userLocation)
               .addTo(map);
-            map.setCenter(userLocation);
           }
+          console.log('Синий маркер добавлен (резерв):', userLocation);
+          map.setCenter(userLocation);
         },
         { timeout: 10000, maximumAge: 0, enableHighAccuracy: true }
       );
@@ -170,48 +173,40 @@
       console.log('Карта загружена');
 
       // Тестовый слой (красный круг)
-      try {
-        map.addSource('test-circle', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            geometry: {
-              type: 'Point',
-              coordinates: center
-            }
+      map.addSource('test-circle', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: center
           }
-        });
-        map.addLayer({
-          id: 'test-circle',
-          type: 'circle',
-          source: 'test-circle',
-          paint: {
-            'circle-radius': 10,
-            'circle-color': '#ff0000'
-          }
-        });
-        console.log('Тестовый круг добавлен:', center);
-      } catch (error) {
-        console.error('Ошибка тестового круга:', error);
-        alert('Ошибка добавления тестового круга');
-      }
+        }
+      });
+      map.addLayer({
+        id: 'test-circle',
+        type: 'circle',
+        source: 'test-circle',
+        paint: {
+          'circle-radius': 10,
+          'circle-color': '#ff0000'
+        }
+      });
+      console.log('Тестовый круг добавлен:', center);
 
       // Опасные места
-      try {
-        dangerousPlaces.forEach(place => {
-          new mapboxgl.Marker({
-            element: document.createElement('div'),
-            className: 'warning-marker'
-          })
-            .setLngLat([place.lng, place.lat])
-            .setPopup(new mapboxgl.Popup().setHTML(<p>${place.desc}</p>))
-            .addTo(map);
-        });
-        console.log('Опасные места добавлены:', dangerousPlaces.length);
-      } catch (error) {
-        console.error('Ошибка опасных мест:', error);
-        alert('Ошибка добавления опасных зон');
-      }
+      console.log('Добавление опасных мест');
+      dangerousPlaces.forEach(place => {
+        console.log('Добавление маркера:', place.desc, [place.lng, place.lat]);
+        new mapboxgl.Marker({
+          element: document.createElement('div'),
+          className: 'warning-marker'
+        })
+          .setLngLat([place.lng, place.lat])
+          .setPopup(new mapboxgl.Popup().setHTML(<p>${place.desc}</p>))
+          .addTo(map);
+      });
+      console.log('Опасные места добавлены:', dangerousPlaces.length);
 
       // Геолокация
       updateGeolocation();

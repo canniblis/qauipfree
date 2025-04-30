@@ -9,11 +9,9 @@
   <style>
     body { margin: 0; padding: 0; }
     #map {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 100%;
+      width: 100vw;
       height: 100vh;
+      min-height: 100vh;
       background: #f0f0f0; /* Фон для диагностики */
     }
   </style>
@@ -30,12 +28,12 @@
       alert('Карта не загрузилась: отсутствует токен MapBox');
       throw new Error('Неверный токен');
     }
-    console.log('Токен установлен:', mapboxgl.accessToken.slice(0, 10) + '...');
+    console.log('Токен:', mapboxgl.accessToken.slice(0, 10) + '...');
 
     // Проверка ресурсов
-    console.log('Проверка ресурсов:');
-    console.log('MapBox JS:', 'https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.js');
-    console.log('MapBox CSS:', 'https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.css');
+    console.log('Ресурсы:');
+    console.log('JS:', 'https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.js');
+    console.log('CSS:', 'https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.css');
 
     // Проверка контейнера
     const mapContainer = document.getElementById('map');
@@ -44,28 +42,18 @@
       alert('Ошибка: Контейнер карты не найден');
       throw new Error('Контейнер #map отсутствует');
     }
-    console.log('Контейнер #map найден, размеры:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
+    console.log('Контейнер #map, размеры:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
 
-    // Получить параметры из URL
+    // Город и координаты
     const urlParams = new URLSearchParams(window.location.search);
     const city = urlParams.get('city') || 'almaty';
-
-    // Координаты и масштаб
     const cityData = {
       'almaty': { center: [76.8897, 43.2389], zoom: 12 },
       'almaty_region': { center: [77.5000, 43.5000], zoom: 8 },
-      'astana': { center: [71.4459, 51.1605], zoom: 12 },
-      'kazakhstan': { center: [66.9237, 48.0196], zoom: 5 }
+      'astana': { center: [71.4459, 51.1605], zoom: 12 }
     };
     const { center, zoom } = cityData[city] || cityData['almaty'];
-    console.log('Инициализация: Город:', city, 'Центр:', center, 'Зум:', zoom);
-
-    // Проверка координат
-    if (!Array.isArray(center) || center.length !== 2 || isNaN(center[0]) || isNaN(center[1])) {
-      console.error('Ошибка: Неверные координаты центра:', center);
-      alert('Ошибка: Неверные координаты региона');
-      throw new Error('Неверные координаты');
-    }
+    console.log('Город:', city, 'Центр:', center, 'Зум:', zoom);
 
     // Инициализация карты
     let map;
@@ -76,10 +64,10 @@
         center: center,
         zoom: zoom
       });
-      console.log('Карта успешно инициализирована');
+      console.log('Карта инициализирована');
     } catch (error) {
       console.error('Ошибка инициализации карты:', error);
-      alert('Не удалось загрузить карту. Проверьте токен и интернет.');
+      alert('Ошибка загрузки карты. Проверьте токен и интернет.');
       throw error;
     }
 
@@ -87,9 +75,7 @@
     const dangerousPlaces = [
       { lng: 76.8897, lat: 43.2389, desc: 'Алматы: центр, высокая преступность' },
       { lng: 76.9667, lat: 43.2333, desc: 'Медеуский район: кражи' },
-      { lng: 76.8667, lat: 43.3167, desc: 'Алатауский район: Шанырак' },
-      { lng: 71.4295, lat: 51.1282, desc: 'Астана: Байтерек, мелкие кражи' },
-      { lng: 71.4000, lat: 51.1000, desc: 'Астана: Mega Silk Way' }
+      { lng: 71.4295, lat: 51.1282, desc: 'Астана: Байтерек, мелкие кражи' }
     ];
 
     // Геолокация
@@ -98,113 +84,110 @@
     const dangerRadius = 0.01; // ~1 км
 
     function checkDangerProximity(coords) {
-      try {
-        console.log('Проверка близости к опасным зонам, координаты:', coords);
-        for (let place of dangerousPlaces) {
-          const dist = Math.sqrt(
-            Math.pow(coords[0] - place.lng, 2) + Math.pow(coords[1] - place.lat, 2)
-          );
-          if (dist < dangerRadius) {
-            console.log('Пользователь рядом с опасной зоной:', place.desc);
-            alert(`Осторожно! Вы рядом с опасной зоной: ${place.desc}`);
-            return true;
-          }
-        }
-        console.log('Пользователь в безопасной зоне');
-        return false;
-      } catch (error) {
-        console.error('Ошибка проверки близости:', error);
-        alert('Ошибка проверки опасных зон');
+      console.log('Проверка опасных зон, координаты:', coords);
+      if (!coords || !Array.isArray(coords) || coords.length !== 2 || isNaN(coords[0]) || isNaN(coords[1])) {
+        console.error('Ошибка: Неверные координаты:', coords);
         return false;
       }
+      for (let place of dangerousPlaces) {
+        const dist = Math.sqrt(
+          Math.pow(coords[0] - place.lng, 2) + Math.pow(coords[1] - place.lat, 2)
+        );
+        if (dist < dangerRadius) {
+          console.log('Опасная зона:', place.desc);
+          alert(`Осторожно! Вы рядом с опасной зоной: ${place.desc}`);
+          return true;
+        }
+      }
+      console.log('Пользователь в безопасной зоне');
+      return false;
     }
 
     function updateGeolocation() {
-      try {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            userLocation = [position.coords.longitude, position.coords.latitude];
-            console.log('Геолокация получена:', userLocation);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          userLocation = [position.coords.longitude, position.coords.latitude];
+          console.log('Геолокация:', userLocation);
 
-            // Обновление маркера
-            if (userMarker) {
-              userMarker.setLngLat(userLocation);
-            } else {
-              userMarker = new mapboxgl.Marker({ color: 'blue' })
-                .setLngLat(userLocation)
-                .addTo(map);
-            }
+          // Обновление маркера
+          if (userMarker) {
+            userMarker.setLngLat(userLocation);
+          } else {
+            userMarker = new mapboxgl.Marker({ color: 'blue' })
+              .setLngLat(userLocation)
+              .addTo(map);
+          }
 
-            // Центрирование карты
+          // Центрирование
+          map.setCenter(userLocation);
+
+          // Проверка опасных зон
+          checkDangerProximity(userLocation);
+        },
+        (error) => {
+          console.error('Ошибка геолокации:', error);
+          userLocation = center;
+          console.log('Центр региона:', userLocation);
+          alert('Геолокация недоступна. Используется центр региона.');
+          if (!userMarker) {
+            userMarker = new mapboxgl.Marker({ color: 'blue' })
+              .setLngLat(userLocation)
+              .addTo(map);
             map.setCenter(userLocation);
-
-            // Проверка близости к опасным зонам
-            checkDangerProximity(userLocation);
-          },
-          (error) => {
-            console.error('Ошибка геолокации:', error);
-            userLocation = cityData[city].center;
-            console.log('Используется центр региона:', userLocation);
-            alert('Геолокация недоступна. Используется центр региона.');
-            if (!userMarker) {
-              userMarker = new mapboxgl.Marker({ color: 'blue' })
-                .setLngLat(userLocation)
-                .addTo(map);
-              map.setCenter(userLocation);
-            }
-          },
-          { timeout: 10000, maximumAge: 0, enableHighAccuracy: true }
-        );
-      } catch (error) {
-        console.error('Ошибка настройки геолокации:', error);
-        alert('Ошибка настройки геолокации');
-      }
+          }
+        },
+        { timeout: 10000, maximumAge: 0, enableHighAccuracy: true }
+      );
     }
 
     map.on('load', () => {
-      console.log('Карта полностью загружена');
+      console.log('Карта загружена');
 
-      // Тестовый маркер для проверки рендеринга
+      // Тестовый слой (красный круг)
       try {
-        console.log('Попытка добавить тестовый маркер в центре:', center);
-        if (map && Array.isArray(center) && center.length === 2) {
-          new mapboxgl.Marker({ color: 'red' })
-            .setLngLat(center)
-            .addTo(map);
-          console.log('Тестовый маркер успешно добавлен');
-        } else {
-          console.error('Ошибка: Карта или координаты недоступны для тестового маркера');
-        }
+        map.addSource('test-circle', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: center
+            }
+          }
+        });
+        map.addLayer({
+          id: 'test-circle',
+          type: 'circle',
+          source: 'test-circle',
+          paint: {
+            'circle-radius': 10,
+            'circle-color': '#ff0000'
+          }
+        });
+        console.log('Тестовый круг добавлен:', center);
       } catch (error) {
-        console.error('Ошибка добавления тестового маркера:', error);
-        alert('Ошибка добавления тестового маркера');
+        console.error('Ошибка тестового круга:', error);
       }
 
-      // Добавление опасных мест
+      // Опасные места
       try {
         dangerousPlaces.forEach(place => {
-          new mapboxgl.Marker({ className: 'warning-marker' })
+          new mapboxgl.Marker({
+            element: document.createElement('div'),
+            className: 'warning-marker'
+          })
             .setLngLat([place.lng, place.lat])
             .setPopup(new mapboxgl.Popup().setHTML(<p>${place.desc}</p>))
             .addTo(map);
         });
         console.log('Опасные места добавлены:', dangerousPlaces.length);
       } catch (error) {
-        console.error('Ошибка добавления опасных мест:', error);
-        alert('Ошибка добавления опасных зон');
+        console.error('Ошибка опасных мест:', error);
       }
 
-      // Начальная геолокация
+      // Геолокация
       updateGeolocation();
-
-      // Обновление геолокации каждые 10 секунд
       setInterval(updateGeolocation, 10000);
-    });
-
-    // Обработка ошибок карты
-    map.on('error', (error) => {
-      console.error('Ошибка загрузки карты:', error);
-      alert('Ошибка загрузки карты: ' + error.message);
     });
   </script>
 </body>
